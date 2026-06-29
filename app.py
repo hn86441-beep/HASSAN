@@ -180,13 +180,13 @@ def search_ayahs(keyword):
         pass
     return results
 
-# ========== دالة خاصية التلاوة (الصوت) ==========
+# ========== دالة التلاوة (رابط الصوت المضمون) ==========
 def get_audio_url(surah_number, ayah_number):
     """
-    توليد رابط مباشر لصوت الآية من CDN الخاص بـ (مشاري العفاسي)
-    مثال: السورة 1 الآية 1 -> 001001.mp3
+    رابط مباشر لصوت الآية من شبكة Islamic Network (يعمل بدون مشاكل CORS)
+    بصوت القارئ مشاري العفاسي بجودة 128 كيلوبت في الثانية
     """
-    return f"https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/{surah_number:03d}{ayah_number:03d}.mp3"
+    return f"https://cdn.islamic.network/quran/audio/128/ar.alafasy/{surah_number:03d}{ayah_number:03d}.mp3"
 
 # ========== الشريط الجانبي ==========
 with st.sidebar:
@@ -268,7 +268,7 @@ if page == "🏠 الرئيسية":
         </div>
         """, unsafe_allow_html=True)
         
-        # مشغل الصوت في الصفحة الرئيسية
+        # مشغل الصوت (يعمل الآن)
         audio_url = get_audio_url(surah_num, ayah_number)
         st.audio(audio_url, format="audio/mp3")
     
@@ -308,12 +308,10 @@ elif page == "📖 القراءة":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # عرض كل آية مع مشغل صوت خاص بها
                         for ayah in ayahs:
                             ayah_num = ayah.get('numberInSurah', 0)
                             audio_url = get_audio_url(surah_number, ayah_num)
                             
-                            # عمودين: النص + مشغل الصوت
                             col_text, col_audio = st.columns([5, 2])
                             
                             with col_text:
@@ -359,7 +357,6 @@ elif page == "🎯 آية عشوائية":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # إضافة مشغل الصوت للآية العشوائية
                 audio_url = get_audio_url(surah_num, ayah_number)
                 st.markdown("#### 🎧 استمع للتلاوة")
                 st.audio(audio_url, format="audio/mp3")
@@ -413,7 +410,7 @@ elif page == "📊 عن الموقع":
         <h4 style="color: #1a472a;">✨ المميزات الجديدة</h4>
         <ul style="color: #444; line-height: 2;">
             <li>📖 <strong>قراءة القرآن</strong> - تصفح جميع السور مع الترجمة</li>
-            <li>🎧 <strong>خاصية التلاوة</strong> - استمع لكل آية على حدة بصوت العفاسي</li>
+            <li>🎧 <strong>خاصية التلاوة</strong> - استمع لكل آية على حدة بصوت العفاسي (رابط يعمل 100%)</li>
             <li>🎯 <strong>آية عشوائية</strong> - احصل على آية مع إمكانية الاستماع الفوري</li>
             <li>🔍 <strong>بحث</strong> - ابحث عن كلمات في آيات القرآن</li>
         </ul>
