@@ -1,856 +1,356 @@
 import streamlit as st
 import requests
-import json
 from datetime import datetime
+import json
 import math
 
-# ==================== إعدادات الصفحة ====================
 st.set_page_config(
-    page_title="القرآن الكريم - مصحف هاشم الذكي",
+    page_title="مصحف هاشم الذكي",
     page_icon="🕌",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ==================== CSS الإبداعي ====================
+# ══════════════════════════════════════════════════════════════
+#  CSS الكامل
+# ══════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;700&display=swap');
-
-:root {
-    --gold: #C9A84C;
-    --dark-green: #1a3a2a;
-    --medium-green: #2d6a4f;
-    --light-green: #52b788;
-    --cream: #fdf8f0;
-    --dark-bg: #0d1f16;
-    --card-bg: #162a1f;
-    --text-light: #e8f5e9;
-    --text-muted: #a5d6a7;
-    --border: #2d5a3d;
-    --shadow: rgba(0,0,0,0.4);
-}
-
-/* الوضع المظلم الافتراضي */
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(135deg, #0a1a0f 0%, #0d2018 50%, #0a1a0f 100%);
-    min-height: 100vh;
-}
-
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d1f16 0%, #162a1f 100%) !important;
-    border-right: 1px solid var(--border);
-}
-
-/* إخفاء عناصر Streamlit الافتراضية */
-#MainMenu, footer, header {display: none !important;}
-[data-testid="stDeployButton"] {display: none;}
-
-/* ==================== رأس التطبيق ==================== */
-.app-header {
-    background: linear-gradient(135deg, #0d2018 0%, #1a3a2a 50%, #0d2018 100%);
-    border: 1px solid var(--gold);
-    border-radius: 20px;
-    padding: 30px;
-    text-align: center;
-    margin-bottom: 25px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(201, 168, 76, 0.2);
-}
-
-.app-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 60%);
-    animation: pulse 4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 1; }
-}
-
-.app-header h1 {
-    font-family: 'Amiri', serif;
-    font-size: 3rem;
-    color: var(--gold);
-    text-shadow: 0 0 30px rgba(201,168,76,0.5);
-    margin: 0;
-    direction: rtl;
-}
-
-.app-header p {
-    font-family: 'Cairo', sans-serif;
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin: 8px 0 0 0;
-    direction: rtl;
-}
-
-/* ==================== الزخارف الإسلامية ==================== */
-.islamic-divider {
-    text-align: center;
-    color: var(--gold);
-    font-size: 1.5rem;
-    margin: 15px 0;
-    letter-spacing: 8px;
-}
-
-/* ==================== الكروت ==================== */
-.feature-card {
-    background: linear-gradient(135deg, var(--card-bg), #1e3a2a);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin: 10px 0;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    direction: rtl;
-    text-align: right;
-}
-
-.feature-card:hover {
-    border-color: var(--gold);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(201,168,76,0.2);
-}
-
-.feature-card .icon {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    display: block;
-}
-
-.feature-card h3 {
-    color: var(--gold);
-    font-family: 'Cairo', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0 0 5px 0;
-}
-
-.feature-card p {
-    color: var(--text-muted);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    margin: 0;
-}
-
-/* ==================== آيات القرآن ==================== */
-.ayah-container {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 30px;
-    margin: 15px 0;
-    direction: rtl;
-    text-align: right;
-    position: relative;
-    transition: all 0.3s;
-}
-
-.ayah-container:hover {
-    border-color: var(--gold);
-    box-shadow: 0 4px 20px rgba(201,168,76,0.15);
-}
-
-.ayah-number {
-    background: linear-gradient(135deg, var(--gold), #a07830);
-    color: #0a1a0f;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Amiri', serif;
-    font-size: 1rem;
-    font-weight: 700;
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-.ayah-text {
-    font-family: 'Amiri', serif;
-    font-size: 1.8rem;
-    color: #f5f0e8;
-    line-height: 2.5;
-    margin-bottom: 12px;
-}
-
-.ayah-translation {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    font-style: italic;
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-    margin-top: 12px;
-}
-
-/* ==================== شريط التنقل الجانبي ==================== */
-.nav-button {
-    background: linear-gradient(135deg, #162a1f, #1e3a2a);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 15px;
-    margin: 5px 0;
-    cursor: pointer;
-    width: 100%;
-    text-align: right;
-    direction: rtl;
-    color: var(--text-light);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.nav-button:hover, .nav-button.active {
-    background: linear-gradient(135deg, var(--medium-green), var(--dark-green));
-    border-color: var(--gold);
-    color: var(--gold);
-}
-
-/* ==================== البسملة ==================== */
-.bismillah {
-    font-family: 'Amiri', serif;
-    font-size: 2.5rem;
-    color: var(--gold);
-    text-align: center;
-    padding: 25px;
-    margin: 15px 0;
-    text-shadow: 0 0 20px rgba(201,168,76,0.4);
-    direction: rtl;
-}
-
-/* ==================== الإحصائيات ==================== */
-.stat-box {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    direction: rtl;
-}
-
-.stat-box .number {
-    font-family: 'Amiri', serif;
-    font-size: 2.5rem;
-    color: var(--gold);
-    font-weight: 700;
-    display: block;
-}
-
-.stat-box .label {
-    font-family: 'Cairo', sans-serif;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-/* ==================== زر التشغيل ==================== */
-.play-button {
-    background: linear-gradient(135deg, var(--gold), #a07830);
-    color: #0a1a0f;
-    border: none;
-    border-radius: 50px;
-    padding: 10px 25px;
-    font-family: 'Cairo', sans-serif;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 0.9rem;
-}
-
-.play-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 5px 20px rgba(201,168,76,0.4);
-}
-
-/* ==================== بطاقة السورة ==================== */
-.surah-card {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin: 8px 0;
-    cursor: pointer;
-    transition: all 0.25s;
-    direction: rtl;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.surah-card:hover {
-    border-color: var(--gold);
-    background: linear-gradient(135deg, #162a1f, #1e3a2a);
-    transform: translateX(-3px);
-}
-
-.surah-number-badge {
-    background: rgba(201,168,76,0.15);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Amiri', serif;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.surah-info h4 {
-    color: #f5f0e8;
-    font-family: 'Amiri', serif;
-    font-size: 1.2rem;
-    margin: 0;
-}
-
-.surah-info small {
-    color: var(--text-muted);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.75rem;
-}
-
-/* ==================== تبويبات ==================== */
-.stTabs [data-baseweb="tab-list"] {
-    background: transparent;
-    gap: 5px;
-    direction: rtl;
-}
-
-.stTabs [data-baseweb="tab"] {
-    background: #162a1f !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    color: var(--text-muted) !important;
-    font-family: 'Cairo', sans-serif !important;
-    padding: 8px 20px !important;
-}
-
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, var(--medium-green), var(--dark-green)) !important;
-    border-color: var(--gold) !important;
-    color: var(--gold) !important;
-}
-
-/* ==================== نمط Focus Mode ==================== */
-.focus-mode {
-    background: #080f0a;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-}
-
-.focus-ayah {
-    font-family: 'Amiri', serif;
-    font-size: 2.5rem;
-    color: #f5f0e8;
-    text-align: center;
-    line-height: 3;
-    direction: rtl;
-    max-width: 900px;
-    text-shadow: 0 0 40px rgba(201,168,76,0.2);
-}
-
-/* ==================== شريط التقدم ==================== */
-.progress-bar {
-    background: var(--border);
-    border-radius: 10px;
-    height: 6px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.progress-fill {
-    background: linear-gradient(90deg, var(--gold), var(--light-green));
-    height: 100%;
-    border-radius: 10px;
-    transition: width 0.3s;
-}
-
-/* ==================== الختمة ==================== */
-.khatma-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 5px;
-    direction: rtl;
-}
-
-.khatma-cell {
-    background: #162a1f;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-}
-
-.khatma-cell.completed {
-    background: linear-gradient(135deg, var(--medium-green), var(--dark-green));
-    border-color: var(--gold);
-    color: var(--gold);
-}
-
-.khatma-cell:hover {
-    border-color: var(--gold);
-}
-
-/* ==================== قسم الأذكار ==================== */
-.dhikr-card {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 25px;
-    margin: 12px 0;
-    direction: rtl;
-    text-align: center;
-    transition: all 0.3s;
-}
-
-.dhikr-card:hover {
-    border-color: var(--gold);
-    box-shadow: 0 5px 20px rgba(201,168,76,0.15);
-}
-
-.dhikr-text {
-    font-family: 'Amiri', serif;
-    font-size: 1.8rem;
-    color: #f5f0e8;
-    margin-bottom: 10px;
-    line-height: 2;
-}
-
-.dhikr-count {
-    background: linear-gradient(135deg, var(--gold), #a07830);
-    color: #0a1a0f;
-    border-radius: 50px;
-    padding: 5px 20px;
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    display: inline-block;
-}
-
-/* ==================== أوقات الصلاة ==================== */
-.prayer-time-card {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin: 8px 0;
-    direction: rtl;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s;
-}
-
-.prayer-time-card.active {
-    border-color: var(--gold);
-    background: linear-gradient(135deg, #162a1f, #1e3a2a);
-    box-shadow: 0 3px 15px rgba(201,168,76,0.2);
-}
-
-.prayer-name {
-    font-family: 'Cairo', sans-serif;
-    color: var(--text-light);
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.prayer-name.active {
-    color: var(--gold);
-}
-
-.prayer-time {
-    font-family: 'Amiri', serif;
-    color: var(--gold);
-    font-size: 1.2rem;
-}
-
-/* ==================== مصراع الخريطة الذهنية ==================== */
-.mind-map-container {
-    background: #080f0a;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 30px;
-    min-height: 400px;
-    position: relative;
-    overflow: hidden;
-}
-
-.mind-node {
-    background: linear-gradient(135deg, var(--dark-green), var(--medium-green));
-    border: 2px solid var(--gold);
-    border-radius: 50px;
-    padding: 10px 20px;
-    display: inline-block;
-    margin: 5px;
-    color: var(--gold);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mind-node:hover {
-    background: linear-gradient(135deg, var(--medium-green), var(--light-green));
-    color: #0a1a0f;
-    transform: scale(1.05);
-}
-
-.mind-node.center {
-    background: linear-gradient(135deg, var(--gold), #a07830);
-    color: #0a1a0f;
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 15px 30px;
-}
-
-/* ==================== بطاقة الحديث ==================== */
-.hadith-card {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 25px;
-    margin: 12px 0;
-    direction: rtl;
-    position: relative;
-}
-
-.hadith-card::before {
-    content: '❝';
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 3rem;
-    color: rgba(201,168,76,0.2);
-    font-family: serif;
-    line-height: 1;
-}
-
-.hadith-text {
-    font-family: 'Amiri', serif;
-    font-size: 1.3rem;
-    color: #f5f0e8;
-    line-height: 2;
-    margin-bottom: 12px;
-    padding-right: 20px;
-}
-
-.hadith-source {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.8rem;
-    color: var(--gold);
-    border-top: 1px solid var(--border);
-    padding-top: 10px;
-}
-
-/* ==================== AI Assistant ==================== */
-.ai-message {
-    background: linear-gradient(135deg, #0d2018, #162a1f);
-    border: 1px solid var(--border);
-    border-radius: 16px 16px 16px 0;
-    padding: 15px 20px;
-    margin: 10px 0;
-    direction: rtl;
-    max-width: 80%;
-}
-
-.user-message {
-    background: linear-gradient(135deg, var(--medium-green), var(--dark-green));
-    border: 1px solid var(--gold);
-    border-radius: 16px 16px 0 16px;
-    padding: 15px 20px;
-    margin: 10px 0 10px auto;
-    direction: rtl;
-    max-width: 80%;
-    text-align: right;
-}
-
-.message-text {
-    font-family: 'Cairo', sans-serif;
-    color: var(--text-light);
-    font-size: 0.95rem;
-    line-height: 1.7;
-}
-
-/* ==================== شريط اختيار الشيخ ==================== */
-.sheikh-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    direction: rtl;
-    margin: 15px 0;
-}
-
-.sheikh-btn {
-    background: #162a1f;
-    border: 1px solid var(--border);
-    border-radius: 25px;
-    padding: 8px 18px;
-    color: var(--text-muted);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.sheikh-btn.active {
-    background: linear-gradient(135deg, var(--gold), #a07830);
-    border-color: var(--gold);
-    color: #0a1a0f;
-    font-weight: 700;
-}
-
-/* ==================== Buttons Streamlit ==================== */
-.stButton > button {
-    background: linear-gradient(135deg, #1e3a2a, #2d6a4f) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    color: var(--text-light) !important;
-    font-family: 'Cairo', sans-serif !important;
-    transition: all 0.2s !important;
-}
-
-.stButton > button:hover {
-    border-color: var(--gold) !important;
-    color: var(--gold) !important;
-    transform: translateY(-2px) !important;
-}
-
-/* Primary button */
-.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, var(--gold), #a07830) !important;
-    color: #0a1a0f !important;
-    font-weight: 700 !important;
-    border: none !important;
-}
-
-/* ==================== Inputs ==================== */
-.stTextInput > div > div > input,
-.stSelectbox > div > div,
-.stTextArea > div > div > textarea {
-    background: #162a1f !important;
-    border-color: var(--border) !important;
-    color: var(--text-light) !important;
-    font-family: 'Cairo', sans-serif !important;
-    direction: rtl !important;
-}
-
-.stSlider > div > div {
-    background: var(--border) !important;
-}
-
-/* ==================== وضع التلاوة المركّز ==================== */
-.reading-mode-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: #050d08;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ==================== شريط التقدم المصحف ==================== */
-.mushaf-progress {
-    background: #162a1f;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 15px 20px;
-    margin: 10px 0;
-    direction: rtl;
-}
-
-/* ==================== تأثيرات الزخرفة ==================== */
-.ornament {
-    text-align: center;
-    color: var(--gold);
-    font-size: 1.2rem;
-    opacity: 0.6;
-    margin: 5px 0;
-    letter-spacing: 5px;
-}
-
-/* ==================== صندوق المشاعر ==================== */
-.emotion-tag {
-    background: rgba(201,168,76,0.1);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 20px;
-    padding: 5px 14px;
-    color: var(--gold);
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.8rem;
-    display: inline-block;
-    margin: 3px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.emotion-tag:hover, .emotion-tag.selected {
-    background: rgba(201,168,76,0.25);
-    border-color: var(--gold);
-}
-
-/* ==================== إشعار ==================== */
-.notification {
-    background: linear-gradient(135deg, var(--medium-green), var(--dark-green));
-    border: 1px solid var(--gold);
-    border-radius: 12px;
-    padding: 12px 20px;
-    margin: 10px 0;
-    direction: rtl;
-    font-family: 'Cairo', sans-serif;
-    color: var(--text-light);
-    font-size: 0.9rem;
-}
-
-/* ==================== جدول ==================== */
-.stDataFrame {
-    background: #162a1f !important;
-    color: var(--text-light) !important;
-    direction: rtl;
-}
-
-/* ==================== Scrollbar ==================== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0d1f16; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold); }
-
-/* ==================== Logo watermark ==================== */
-.watermark {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    opacity: 0.15;
-    font-family: 'Amiri', serif;
-    font-size: 1.5rem;
-    color: var(--gold);
-    pointer-events: none;
-    z-index: 100;
-}
-
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700;900&display=swap');
+
+:root{
+  --gold:#C9A84C; --gold2:#e8c86a;
+  --bg:#070f0a; --bg2:#0d1f16; --bg3:#122018; --card:#162a1f;
+  --border:#2a4a35; --border2:#3d6b50;
+  --text:#e8f5e9; --muted:#7fb899; --dim:#4a7060;
+  --green:#2d6a4f; --lgreen:#52b788;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+[data-testid="stAppViewContainer"]{
+  background: radial-gradient(ellipse at 20% 0%, #0d2a1a 0%, #070f0a 60%) !important;
+  min-height:100vh;
+}
+[data-testid="stSidebar"]{
+  background: linear-gradient(180deg,#0a1a0f,#0d1f16) !important;
+  border-right:1px solid var(--border) !important;
+}
+[data-testid="stSidebar"] > div:first-child{padding-top:0 !important;}
+#MainMenu,footer,header,[data-testid="stDeployButton"]{display:none !important;}
+[data-testid="stMainBlockContainer"]{padding:1rem 1.5rem !important;}
+
+/* ── Sidebar nav ── */
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; margin:2px 0;
+  border-radius:10px; cursor:pointer;
+  border:1px solid transparent;
+  font-family:'Cairo',sans-serif; font-size:.88rem;
+  color:var(--muted); direction:rtl;
+  transition:all .2s;
+}
+.nav-item:hover{background:var(--card); border-color:var(--border); color:var(--text);}
+.nav-item.active{
+  background:linear-gradient(135deg,#1a3d2a,#0f2a1a);
+  border-color:var(--gold); color:var(--gold);
+}
+.nav-item .ni{font-size:1.1rem; min-width:22px;}
+
+/* ── Streamlit buttons override ── */
+.stButton>button{
+  background:var(--card) !important; border:1px solid var(--border) !important;
+  border-radius:10px !important; color:var(--muted) !important;
+  font-family:'Cairo',sans-serif !important; transition:all .2s !important;
+  padding:8px 16px !important;
+}
+.stButton>button:hover{border-color:var(--gold) !important; color:var(--gold) !important; background:#1a3328 !important;}
+.stButton>button[kind="primary"]{
+  background:linear-gradient(135deg,var(--gold),#a07828) !important;
+  color:#050e08 !important; font-weight:700 !important; border:none !important;
+}
+.stButton>button[kind="primary"]:hover{opacity:.9 !important; transform:translateY(-1px) !important;}
+
+/* ── Inputs ── */
+.stTextInput>div>div>input,
+.stTextArea>div>div>textarea,
+.stSelectbox>div>div>div{
+  background:var(--card) !important; border-color:var(--border) !important;
+  color:var(--text) !important; font-family:'Cairo',sans-serif !important;
+  border-radius:10px !important;
+}
+.stSelectbox>div>div>div{direction:rtl !important;}
+label{color:var(--muted) !important; font-family:'Cairo',sans-serif !important;}
+.stSlider>div>div>div{background:var(--border) !important;}
+.stSlider>div>div>div>div{background:var(--gold) !important;}
+.stCheckbox>label{color:var(--muted) !important;}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"]{background:transparent; gap:5px;}
+.stTabs [data-baseweb="tab"]{
+  background:var(--card) !important; border:1px solid var(--border) !important;
+  border-radius:10px !important; color:var(--muted) !important;
+  font-family:'Cairo',sans-serif !important;
+}
+.stTabs [aria-selected="true"]{
+  background:linear-gradient(135deg,#1a3d2a,#0f2a1a) !important;
+  border-color:var(--gold) !important; color:var(--gold) !important;
+}
+
+/* ── Page header ── */
+.pg-header{
+  background:linear-gradient(135deg,#0d2018,#162a1f,#0d2018);
+  border:1px solid var(--gold); border-radius:18px;
+  padding:28px 30px; text-align:center; margin-bottom:22px;
+  box-shadow:0 6px 30px rgba(201,168,76,.15);
+  position:relative; overflow:hidden;
+}
+.pg-header::after{
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(201,168,76,.06),transparent 60%);
+}
+.pg-header h1{font-family:'Amiri',serif; font-size:2.4rem; color:var(--gold); direction:rtl;}
+.pg-header p{font-family:'Cairo',sans-serif; color:var(--muted); font-size:.9rem; direction:rtl; margin-top:5px;}
+
+/* ── Bismillah ── */
+.bismillah{
+  font-family:'Amiri',serif; font-size:2.2rem; color:var(--gold);
+  text-align:center; padding:18px; direction:rtl;
+  text-shadow:0 0 20px rgba(201,168,76,.35);
+}
+
+/* ── Surah header ── */
+.surah-hdr{
+  background:linear-gradient(135deg,#0d2018,#1a3328);
+  border:1px solid var(--gold); border-radius:16px;
+  padding:20px; text-align:center; margin:12px 0;
+}
+.surah-hdr .sname{font-family:'Amiri',serif; font-size:2.2rem; color:var(--gold);}
+.surah-hdr .smeta{font-family:'Cairo',sans-serif; font-size:.8rem; color:var(--muted); margin-top:6px;}
+
+/* ── Ayah card ── */
+.ayah-card{
+  background:linear-gradient(135deg,#0d2018,#142418);
+  border:1px solid var(--border); border-radius:14px;
+  padding:18px 22px; margin:8px 0;
+  transition:border-color .2s, box-shadow .2s;
+  direction:rtl; position:relative;
+}
+.ayah-card:hover{border-color:var(--border2); box-shadow:0 3px 16px rgba(201,168,76,.1);}
+.ayah-card.highlight{border-color:var(--gold); box-shadow:0 0 20px rgba(201,168,76,.2);}
+.ayah-num{
+  display:inline-flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--gold),#9a7020);
+  color:#050e08; width:34px; height:34px; border-radius:50%;
+  font-family:'Amiri',serif; font-size:.85rem; font-weight:700;
+  float:left; margin-right:14px; flex-shrink:0;
+}
+.ayah-text{
+  font-family:'Amiri',serif; color:#f5f0e8;
+  line-height:2.6; display:block;
+}
+.ayah-trans{
+  font-family:'Cairo',sans-serif; font-size:.85rem; color:var(--muted);
+  border-top:1px solid var(--border); padding-top:10px; margin-top:10px;
+}
+.ayah-actions{
+  display:flex; gap:6px; margin-top:10px; justify-content:flex-start;
+}
+.aa-btn{
+  background:rgba(255,255,255,.04); border:1px solid var(--border);
+  border-radius:8px; padding:5px 12px;
+  color:var(--muted); font-family:'Cairo',sans-serif; font-size:.78rem;
+  cursor:pointer; transition:all .2s;
+}
+.aa-btn:hover{border-color:var(--gold); color:var(--gold);}
+
+/* ── Surah list item ── */
+.sl-item{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; margin:4px 0;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; cursor:pointer; direction:rtl;
+  transition:all .2s;
+}
+.sl-item:hover{border-color:var(--gold); background:#1a3328;}
+.sl-num{
+  background:rgba(201,168,76,.12); border:1px solid rgba(201,168,76,.3);
+  color:var(--gold); width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Amiri',serif; font-size:.85rem; flex-shrink:0;
+}
+.sl-name{font-family:'Amiri',serif; font-size:1.15rem; color:var(--text);}
+.sl-meta{font-family:'Cairo',sans-serif; font-size:.72rem; color:var(--muted);}
+
+/* ── Card generic ── */
+.g-card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:20px; margin:8px 0;
+  direction:rtl;
+}
+.g-card h3{font-family:'Cairo',sans-serif; color:var(--gold); margin-bottom:10px;}
+.g-card p{font-family:'Cairo',sans-serif; color:var(--muted); font-size:.88rem; line-height:1.8;}
+
+/* ── Stats row ── */
+.stat-box{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:18px; text-align:center; direction:rtl;
+}
+.stat-box .num{font-family:'Amiri',serif; font-size:2rem; color:var(--gold); display:block;}
+.stat-box .lbl{font-family:'Cairo',sans-serif; font-size:.78rem; color:var(--muted);}
+
+/* ── Progress bar ── */
+.pbar{background:var(--border); border-radius:10px; height:7px; overflow:hidden; margin:8px 0;}
+.pfill{height:100%; border-radius:10px; background:linear-gradient(90deg,var(--gold),var(--lgreen));}
+
+/* ── Audio player custom ── */
+.audio-wrap{
+  background:linear-gradient(135deg,#0d2018,#162a1f);
+  border:1px solid var(--gold); border-radius:18px;
+  padding:24px; text-align:center; margin:14px 0;
+}
+.audio-wrap .aw-title{font-family:'Amiri',serif; font-size:1.8rem; color:var(--gold); direction:rtl;}
+.audio-wrap .aw-meta{font-family:'Cairo',sans-serif; font-size:.85rem; color:var(--muted); margin:6px 0 16px;}
+audio{width:90%; border-radius:40px; outline:none; margin-top:8px;}
+audio::-webkit-media-controls-panel{background:#162a1f;}
+
+/* ── Dhikr card ── */
+.dhikr-card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:22px; margin:10px 0;
+  direction:rtl; text-align:center;
+  transition:border-color .2s;
+}
+.dhikr-card:hover{border-color:var(--border2);}
+.dhikr-text{font-family:'Amiri',serif; font-size:1.5rem; color:#f0ebe0; line-height:2.2; margin-bottom:10px;}
+.dhikr-badge{
+  background:linear-gradient(135deg,var(--gold),#9a7020);
+  color:#050e08; border-radius:30px; padding:4px 16px;
+  font-family:'Cairo',sans-serif; font-size:.78rem; font-weight:700;
+  display:inline-block; margin-bottom:8px;
+}
+.dhikr-benefit{font-family:'Cairo',sans-serif; font-size:.78rem; color:var(--dim);}
+.dhikr-counter{
+  font-family:'Amiri',serif; font-size:2rem; color:var(--gold);
+  margin:8px 0;
+}
+
+/* ── Prayer time card ── */
+.pt-card{
+  display:flex; justify-content:space-between; align-items:center;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:14px 20px; margin:6px 0; direction:rtl;
+  transition:all .2s;
+}
+.pt-card.now{border-color:var(--gold); background:#1a3328; box-shadow:0 2px 14px rgba(201,168,76,.15);}
+.pt-name{font-family:'Cairo',sans-serif; color:var(--text); font-size:.95rem;}
+.pt-name.now{color:var(--gold); font-weight:700;}
+.pt-time{font-family:'Amiri',serif; color:var(--gold); font-size:1.2rem;}
+
+/* ── Hadith card ── */
+.hadith-card{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:24px; margin:10px 0; direction:rtl;
+  position:relative; overflow:hidden;
+}
+.hadith-card::before{
+  content:'"'; position:absolute; top:8px; right:16px;
+  font-size:5rem; color:rgba(201,168,76,.08); font-family:serif; line-height:1;
+}
+.hadith-text{font-family:'Amiri',serif; font-size:1.25rem; color:#f0ebe0; line-height:2.2; margin-bottom:12px;}
+.hadith-src{font-family:'Cairo',sans-serif; font-size:.78rem; color:var(--gold); border-top:1px solid var(--border); padding-top:10px;}
+
+/* ── AI chat ── */
+.chat-u{
+  background:linear-gradient(135deg,var(--green),#1a3a28);
+  border:1px solid var(--border2); border-radius:16px 16px 0 16px;
+  padding:12px 18px; margin:8px 0 8px 15%; direction:rtl;
+}
+.chat-a{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px 16px 16px 0;
+  padding:12px 18px; margin:8px 15% 8px 0; direction:rtl;
+}
+.chat-lbl{font-family:'Cairo',sans-serif; font-size:.72rem; color:var(--dim); margin-bottom:4px;}
+.chat-txt{font-family:'Cairo',sans-serif; color:var(--text); font-size:.9rem; line-height:1.8; white-space:pre-wrap;}
+
+/* ── Mind map ── */
+.mm-stage{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:14px 18px; margin:6px 0;
+  direction:rtl; cursor:pointer; transition:all .2s;
+}
+.mm-stage:hover{border-color:var(--gold); background:#1a3328;}
+.mm-stage-num{
+  background:linear-gradient(135deg,var(--gold),#9a7020);
+  color:#050e08; width:28px; height:28px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:'Cairo',sans-serif; font-size:.78rem; font-weight:700;
+  margin-left:10px;
+}
+
+/* ── Khatma grid ── */
+.khatma-wrap{display:flex; flex-wrap:wrap; gap:4px; direction:rtl;}
+.k-cell{
+  background:var(--card); border:1px solid var(--border);
+  border-radius:8px; width:calc(100%/8 - 4px); padding:7px 4px;
+  text-align:center; cursor:pointer; transition:all .15s;
+  font-family:'Cairo',sans-serif; font-size:.65rem; color:var(--muted);
+}
+.k-cell.done{background:linear-gradient(135deg,#1a3d2a,#0f2a1a); border-color:var(--gold); color:var(--gold);}
+.k-cell:hover{border-color:var(--border2);}
+
+/* ── Mood button ── */
+.mood-btn{
+  background:var(--card); border:2px solid var(--border);
+  border-radius:16px; padding:14px 10px; text-align:center;
+  cursor:pointer; transition:all .2s; margin:4px 0;
+  font-family:'Cairo',sans-serif; direction:rtl;
+}
+.mood-btn.sel{border-color:var(--gold); background:#1a3328;}
+.mood-btn .mi{font-size:1.6rem; display:block; margin-bottom:4px;}
+.mood-btn .ml{font-size:.78rem; color:var(--muted);}
+.mood-btn.sel .ml{color:var(--gold);}
+
+/* ── Tajweed result ── */
+.tj-result{
+  background:var(--card); border:1px solid var(--gold);
+  border-radius:14px; padding:20px; margin-top:16px; direction:rtl;
+}
+.tj-result h4{font-family:'Cairo',sans-serif; color:var(--gold); margin-bottom:12px;}
+.tj-result p{font-family:'Cairo',sans-serif; color:var(--text); font-size:.9rem; line-height:2; white-space:pre-wrap;}
+
+/* ── Info boxes ── */
+.info-box{
+  background:rgba(82,183,136,.08); border:1px solid rgba(82,183,136,.25);
+  border-radius:10px; padding:12px 16px; margin:8px 0;
+  font-family:'Cairo',sans-serif; color:var(--text); font-size:.85rem;
+  direction:rtl; line-height:1.8;
+}
+.warn-box{
+  background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.25);
+  border-radius:10px; padding:12px 16px; margin:8px 0;
+  font-family:'Cairo',sans-serif; color:var(--text); font-size:.85rem; direction:rtl;
+}
+
+/* ── Divider ornament ── */
+.orn{text-align:center; color:var(--gold); letter-spacing:8px; margin:12px 0; opacity:.7; font-size:.9rem;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2); border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+/* ── Spinner ── */
+.stSpinner>div{border-top-color:var(--gold) !important;}
 </style>
 """, unsafe_allow_html=True)
 
-# ==================== تهيئة الجلسة ====================
-def init_session():
-    defaults = {
-        'page': 'home',
-        'current_surah': 1,
-        'current_ayah': 1,
-        'font_size': 2.0,
-        'selected_sheikh': 'ar.alafasy',
-        'focus_mode': False,
-        'bookmarks': [],
-        'heart_library': [],
-        'khatma_progress': [False] * 114,
-        'reading_progress': {},
-        'daily_dhikr_count': {},
-        'chat_history': [],
-        'show_translation': True,
-        'show_tafseer': False,
-        'dark_mode': True,
-        'tajweed_mode': False,
-        'listening_mood': None,
-        'completed_pages': set(),
-    }
-    for k, v in defaults.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
-
-init_session()
-
-# ==================== البيانات والـ APIs ====================
-
-SHEIKHS = {
-    "ar.alafasy": "مشاري راشد العفاسي",
-    "ar.abdullahbasfar": "عبد الله بصفر",
-    "ar.hudhaify": "علي الحذيفي",
-    "ar.minshawi": "محمد صديق المنشاوي",
-    "ar.abdurrahmaansudais": "عبد الرحمن السديس",
-    "ar.shaatree": "أبو بكر الشاطري",
-    "ar.mahermuaiqly": "ماهر المعيقلي",
-    "ar.muhammadayyoub": "محمد أيوب",
-}
-
-MOODS = {
-    "حزن وضيق": [2, 94, 65, 93],
-    "فرح وشكر": [55, 36, 67, 1],
-    "خوف وقلق": [2, 3, 13, 58],
-    "توبة وندم": [39, 4, 25, 110],
-    "تأمل وتدبر": [3, 45, 88, 56],
-    "قبل النوم": [67, 32, 36, 112],
-    "صباح جديد": [78, 87, 1, 36],
-    "في المصيبة": [2, 3, 94, 93],
-    "طلب الرزق": [67, 65, 73, 20],
-    "شفاء المريض": [17, 10, 26, 27],
-}
-
-QURAN_DATA = {
-    1: {"name": "الفاتحة", "english": "Al-Fatiha", "verses": 7, "type": "مكية", "juz": 1},
-    2: {"name": "البقرة", "english": "Al-Baqara", "verses": 286, "type": "مدنية", "juz": 1},
-    3: {"name": "آل عمران", "english": "Ali Imran", "verses": 200, "type": "مدنية", "juz": 3},
-    4: {"name": "النساء", "english": "An-Nisa", "verses": 176, "type": "مدنية", "juz": 4},
-    5: {"name": "المائدة", "english": "Al-Ma'ida", "verses": 120, "type": "مدنية", "juz": 6},
-    6: {"name": "الأنعام", "english": "Al-An'am", "verses": 165, "type": "مكية", "juz": 7},
-    7: {"name": "الأعراف", "english": "Al-A'raf", "verses": 206, "type": "مكية", "juz": 8},
-    8: {"name": "الأنفال", "english": "Al-Anfal", "verses": 75, "type": "مدنية", "juz": 9},
-    9: {"name": "التوبة", "english": "At-Tawba", "verses": 129, "type": "مدنية", "juz": 10},
-    10: {"name": "يونس", "english": "Yunus", "verses": 109, "type": "مكية", "juz": 11},
-    11: {"name": "هود", "english": "Hud", "verses": 123, "type": "مكية", "juz": 11},
-    12: {"name": "يوسف", "english": "Yusuf", "verses": 111, "type": "مكية", "juz": 12},
-    13: {"name": "الرعد", "english": "Ar-Ra'd", "verses": 43, "type": "مدنية", "juz": 13},
-    14: {"name": "إبراهيم", "english": "Ibrahim", "verses": 52, "type": "مكية", "juz": 13},
-    15: {"name": "الحجر", "english": "Al-Hijr", "verses": 99, "type": "مكية", "juz": 14},
-    16: {"name": "النحل", "english": "An-Nahl", "verses": 128, "type": "مكية", "juz": 14},
-    17: {"name": "الإسراء", "english": "Al-Isra", "verses": 111, "type": "مكية", "juz": 15},
-    18: {"name": "الكهف", "english": "Al-Kahf", "verses": 110, "type": "مكية", "juz": 15},
-    19: {"name": "مريم", "english": "Maryam", "verses": 98, "type": "مكية", "juz": 16},
-    20: {"name": "طه", "english": "Ta-Ha", "verses": 135, "type": "مكية", "juz": 16},
-    21: {"name": "الأنبياء", "english": "Al-Anbiya", "verses": 112, "type": "مكية", "juz": 17},
-    22: {"name": "الحج", "english": "Al-Hajj", "verses": 78, "type": "مدنية", "juz": 17},
-    23: {"name": "المؤمنون", "english": "Al-Mu'minun", "verses": 118, "type": "مكية", "juz": 18},
-    24: {"name": "النور", "english": "An-Nur", "verses": 64, "type": "مدنية", "juz": 18},
-    25: {"name": "الفرقان", "english": "Al-Furqan", "verses": 77, "type": "مكية", "juz": 18},
-    36: {"name": "يس", "english": "Ya-Sin", "verses": 83, "type": "مكية", "juz": 22},
-    55: {"name": "الرحمن", "english": "Ar-Rahman", "verses": 78, "type": "مدنية", "juz": 27},
-    56: {"name": "الواقعة", "english": "Al-Waqi'a", "verses": 96, "type": "مكية", "juz": 27},
-    67: {"name": "الملك", "english": "Al-Mulk", "verses": 30, "type": "مكية", "juz": 29},
-    78: {"name": "النبأ", "english": "An-Naba", "verses": 40, "type": "مكية", "juz": 30},
-    87: {"name": "الأعلى", "english": "Al-A'la", "verses": 19, "type": "مكية", "juz": 30},
-    93: {"name": "الضحى", "english": "Ad-Duha", "verses": 11, "type": "مكية", "juz": 30},
-    94: {"name": "الشرح", "english": "Ash-Sharh", "verses": 8, "type": "مكية", "juz": 30},
-    108: {"name": "الكوثر", "english": "Al-Kawthar", "verses": 3, "type": "مكية", "juz": 30},
-    110: {"name": "النصر", "english": "An-Nasr", "verses": 3, "type": "مدنية", "juz": 30},
-    112: {"name": "الإخلاص", "english": "Al-Ikhlas", "verses": 4, "type": "مكية", "juz": 30},
-    113: {"name": "الفلق", "english": "Al-Falaq", "verses": 5, "type": "مكية", "juz": 30},
-    114: {"name": "الناس", "english": "An-Nas", "verses": 6, "type": "مكية", "juz": 30},
-}
-
-# Complete all 114 surahs
-ALL_SURAHS = {}
-surah_names = [
+# ══════════════════════════════════════════════════════════════
+#  بيانات السور الكاملة (114 سورة)
+# ══════════════════════════════════════════════════════════════
+SURAH_NAMES = [
     "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
     "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
     "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
@@ -864,1476 +364,1199 @@ surah_names = [
     "القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
     "المسد","الإخلاص","الفلق","الناس"
 ]
-surah_verses = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,23,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,3,11,4,5,6]
+SURAH_VERSES = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,
+                112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,
+                54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,
+                14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,
+                29,23,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,3,
+                11,4,5,6]
+SURAH_TYPE = ["مكية" if i+1 not in {2,3,4,5,8,9,13,22,24,33,47,48,49,55,57,58,59,60,61,62,63,64,65,66,76,98,99,110} else "مدنية" for i in range(114)]
+SURAH_JUZ  = [1,1,1,1,1,1,1,1,10,11,11,12,13,13,14,14,15,15,16,16,17,17,18,18,18,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,24,25,25,25,26,26,26,26,26,26,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]
 
-juz_map = [1,1,1,1,1,1,1,1,10,11,11,12,13,13,14,14,15,15,16,16,17,17,18,18,18,19,19,20,20,21,21,21,21,22,22,22,23,23,23,24,24,24,25,25,25,26,26,26,26,26,26,27,27,27,27,27,27,28,28,28,28,28,28,28,28,28,29,29,29,29,29,29,29,29,29,29,29,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]
+def surah_info(n):  # n 1-based
+    i = n-1
+    return {"name": SURAH_NAMES[i], "verses": SURAH_VERSES[i], "type": SURAH_TYPE[i], "juz": SURAH_JUZ[i]}
 
-for i, name in enumerate(surah_names):
-    n = i + 1
-    ALL_SURAHS[n] = {
-        "name": name,
-        "verses": surah_verses[i] if i < len(surah_verses) else 10,
-        "type": "مكية" if n not in [2,3,4,5,8,9,13,22,24,33,47,48,49,55,57,58,59,60,61,62,63,64,65,66,76,98,99,110] else "مدنية",
-        "juz": juz_map[i] if i < len(juz_map) else 30,
+SHEIKHS = {
+    "ar.alafasy":            "مشاري راشد العفاسي",
+    "ar.abdullahbasfar":     "عبد الله بصفر",
+    "ar.hudhaify":           "علي الحذيفي",
+    "ar.minshawi":           "محمد صديق المنشاوي",
+    "ar.abdurrahmaansudais": "عبد الرحمن السديس",
+    "ar.shaatree":           "أبو بكر الشاطري",
+    "ar.mahermuaiqly":       "ماهر المعيقلي",
+    "ar.muhammadayyoub":     "محمد أيوب",
+}
+SHEIKH_CDN = {
+    "ar.alafasy":"Alafasy_128kbps",
+    "ar.abdullahbasfar":"Abdullah_Basfar_192kbps",
+    "ar.hudhaify":"Hudhaify_128kbps",
+    "ar.minshawi":"Minshawy_Murattal_128kbps",
+    "ar.abdurrahmaansudais":"Abdurrahmaan_As-Sudais_192kbps",
+    "ar.shaatree":"Abu_Bakr_Ash-Shaatree_128kbps",
+    "ar.mahermuaiqly":"MaherAlMuaiqly128kbps",
+    "ar.muhammadayyoub":"Muhammad_Ayyoub_128kbps",
+}
+
+MOODS = {
+    "😢 حزن وضيق":    [94, 93, 65, 2],
+    "😊 فرح وشكر":    [55, 36, 1, 17],
+    "😰 خوف وقلق":    [13, 3, 2, 58],
+    "🥺 توبة وندم":   [39, 25, 4, 110],
+    "🤔 تدبر وتأمل":  [45, 88, 56, 67],
+    "🌙 قبل النوم":   [67, 32, 36, 112],
+    "🌅 صباح جديد":   [78, 87, 1, 36],
+    "💔 في المصيبة":  [2, 3, 94, 93],
+    "🤲 طلب الرزق":   [67, 65, 73, 20],
+    "🏥 شفاء المريض": [17, 10, 26, 27],
+}
+
+# ══════════════════════════════════════════════════════════════
+#  تهيئة الجلسة
+# ══════════════════════════════════════════════════════════════
+def init():
+    defs = {
+        "page": "home",
+        "cur_surah": 1, "cur_ayah": 1,
+        "font_size": 1.9,
+        "sheikh": "ar.alafasy",
+        "show_trans": True, "show_tafseer": False,
+        "bookmarks": [], "heart": [],
+        "khatma": [False]*114,
+        "dhikr_cnt": {},
+        "chat": [],
+        "mood_sel": None,
     }
+    for k,v in defs.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+init()
 
-@st.cache_data(ttl=3600)
-def get_quran_data(surah, ayah=None):
+# ══════════════════════════════════════════════════════════════
+#  Helper: API calls
+# ══════════════════════════════════════════════════════════════
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_surah(n):
     try:
-        if ayah:
-            url = f"https://api.alquran.cloud/v1/ayah/{surah}:{ayah}/editions/quran-uthmani,ar.alafasy"
-        else:
-            url = f"https://api.alquran.cloud/v1/surah/{surah}/editions/quran-uthmani,ar.alafasy"
-        r = requests.get(url, timeout=10)
-        if r.status_code == 200:
-            return r.json()
-    except:
-        pass
+        r = requests.get(f"https://api.alquran.cloud/v1/surah/{n}/editions/quran-uthmani,en.sahih", timeout=12)
+        if r.status_code == 200: return r.json()["data"]
+    except: pass
     return None
 
-@st.cache_data(ttl=3600)
-def get_translation(surah, ayah=None, edition="en.sahih"):
+@st.cache_data(ttl=86400, show_spinner=False)
+def fetch_prayer(lat, lon, method=5):
     try:
-        if ayah:
-            url = f"https://api.alquran.cloud/v1/ayah/{surah}:{ayah}/{edition}"
-        else:
-            url = f"https://api.alquran.cloud/v1/surah/{surah}/{edition}"
-        r = requests.get(url, timeout=10)
-        if r.status_code == 200:
-            return r.json()
-    except:
-        pass
+        d = datetime.now().strftime("%d-%m-%Y")
+        r = requests.get(f"https://api.aladhan.com/v1/timings/{d}?latitude={lat}&longitude={lon}&method={method}", timeout=10)
+        if r.status_code == 200: return r.json()["data"]["timings"]
+    except: pass
     return None
 
-@st.cache_data(ttl=86400)
-def get_prayer_times(lat=30.06, lon=31.24, method=5):
+@st.cache_data(ttl=3600, show_spinner=False)
+def fetch_qibla(lat, lon):
     try:
-        now = datetime.now()
-        url = f"https://api.aladhan.com/v1/timings/{now.strftime('%d-%m-%Y')}?latitude={lat}&longitude={lon}&method={method}"
-        r = requests.get(url, timeout=10)
-        if r.status_code == 200:
-            return r.json()['data']['timings']
-    except:
-        pass
+        r = requests.get(f"https://api.aladhan.com/v1/qibla/{lat}/{lon}", timeout=10)
+        if r.status_code == 200: return r.json()["data"]["direction"]
+    except: pass
     return None
 
-def get_qibla(lat=30.06, lon=31.24):
+def audio_url(surah, ayah, sheikh="ar.alafasy"):
+    cdn = SHEIKH_CDN.get(sheikh, "Alafasy_128kbps")
+    s = str(surah).zfill(3); a = str(ayah).zfill(3)
+    return f"https://verses.quran.com/{cdn}/{s}{a}.mp3"
+
+def surah_audio_url(surah, sheikh="ar.alafasy"):
+    cdn = SHEIKH_CDN.get(sheikh, "Alafasy_128kbps")
+    s = str(surah).zfill(3)
+    return f"https://download.quranicaudio.com/quran/{cdn.lower().replace('_128kbps','').replace('_192kbps','')}/{s}.mp3"
+
+def claude_ask(prompt, system="أنت مساعد قرآني إسلامي عالم. أجب بالعربية بأسلوب واضح ودقيق.", history=None):
+    msgs = []
+    if history:
+        msgs = [{"role": m["role"], "content": m["content"]} for m in history[-8:]]
+    msgs.append({"role": "user", "content": prompt})
     try:
-        url = f"https://api.aladhan.com/v1/qibla/{lat}/{lon}"
-        r = requests.get(url, timeout=10)
+        r = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"Content-Type": "application/json"},
+            json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
+                  "system": system, "messages": msgs},
+            timeout=35
+        )
         if r.status_code == 200:
-            return r.json()['data']['direction']
-    except:
-        pass
-    return None
+            return r.json()["content"][0]["text"]
+    except Exception as e:
+        return f"⚠️ خطأ: {e}"
+    return "⚠️ لم يتم الاتصال بالخادم"
 
-def get_audio_url(surah, ayah, reciter="ar.alafasy"):
-    surah_str = str(surah).zfill(3)
-    ayah_str = str(ayah).zfill(3)
-    reciter_short = reciter.replace("ar.", "")
-    url = f"https://cdn.islamic.network/quran/audio/128/{reciter}/{surah_str}{ayah_str}.mp3"
-    return url
+# ══════════════════════════════════════════════════════════════
+#  Sidebar navigation
+# ══════════════════════════════════════════════════════════════
+PAGES = [
+    ("🏠","home","الرئيسية"),
+    ("📖","mushaf","المصحف الشريف"),
+    ("🎙️","audio","مشغّل التلاوة"),
+    ("🎤","tajweed","تصحيح التلاوة بالذكاء"),
+    ("🗺️","mindmap","خريطة القصص القرآنية"),
+    ("💭","mood","القرآن بحسب حالتي"),
+    ("📚","tafseer","التفسير والتدبر"),
+    ("🔍","search","البحث القرآني الذكي"),
+    ("🤖","ai","المساعد القرآني"),
+    ("❤️","heart","مكتبة القلب"),
+    ("🔖","bookmarks","الإشارات المرجعية"),
+    ("📿","khatma","تتبع الختمة"),
+    ("🌙","dhikr","الأذكار"),
+    ("🕌","prayer","أوقات الصلاة"),
+    ("🧭","qibla","اتجاه القبلة"),
+    ("📜","hadith","الأحاديث الصحيحة"),
+    ("⚙️","settings","الإعدادات"),
+]
 
-# ==================== الشريط الجانبي ====================
-def render_sidebar():
-    with st.sidebar:
-        st.markdown("""
-        <div style='text-align:center; padding: 15px 0 5px;'>
-            <span style='font-size:2.5rem'>🕌</span>
-            <h2 style='color:#C9A84C; font-family:Amiri,serif; margin:5px 0; direction:rtl; font-size:1.3rem'>
-                مصحف هاشم الذكي
-            </h2>
-            <p style='color:#a5d6a7; font-family:Cairo,sans-serif; font-size:0.75rem; direction:rtl; margin:0'>
-                القرآن الكريم بتجربة فريدة
-            </p>
-        </div>
-        <div class='ornament'>❧ ✦ ❧</div>
-        """, unsafe_allow_html=True)
-
-        pages = [
-            ("🏠", "home", "الرئيسية"),
-            ("📖", "mushaf", "المصحف الشريف"),
-            ("🎙️", "audio", "الاستماع والتلاوة"),
-            ("🧠", "tajweed", "تصحيح التلاوة بالذكاء الاصطناعي"),
-            ("🗺️", "mindmap", "خريطة القصص القرآنية"),
-            ("💭", "mood", "القرآن بحسب حالتي"),
-            ("📚", "tafseer", "التفسير والتدبر"),
-            ("🔍", "search", "البحث بالمقاصد"),
-            ("🤖", "ai_assistant", "المساعد القرآني الذكي"),
-            ("❤️", "heart", "مكتبة القلب"),
-            ("🔖", "bookmarks", "الإشارات المرجعية"),
-            ("📿", "khatma", "الختمة"),
-            ("🌙", "dhikr", "الأذكار"),
-            ("🕌", "prayer", "أوقات الصلاة"),
-            ("🧭", "qibla", "اتجاه القبلة"),
-            ("📜", "hadith", "الأحاديث الصحيحة"),
-            ("⚙️", "settings", "الإعدادات"),
-        ]
-
-        for icon, key, label in pages:
-            is_active = st.session_state.page == key
-            btn_style = "border-color: #C9A84C; color: #C9A84C;" if is_active else ""
-            if st.button(f"{icon}  {label}", key=f"nav_{key}", use_container_width=True):
-                st.session_state.page = key
-                st.rerun()
-
-        st.markdown("""
-        <div class='ornament' style='margin-top:20px'>❧ ✦ ❧</div>
-        <div style='text-align:center; padding:10px; color:#4a7a5a; font-family:Cairo,sans-serif; font-size:0.75rem; direction:rtl'>
-            بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
-        </div>
-        """, unsafe_allow_html=True)
-
-# ==================== الصفحة الرئيسية ====================
-def render_home():
+with st.sidebar:
     st.markdown("""
-    <div class='app-header'>
-        <div class='ornament'>﴾ ﴿</div>
-        <h1>القرآن الكريم</h1>
-        <p style='font-size:1.2rem'>مصحف هاشم الذكي — تجربة تلاوة لا مثيل لها</p>
-        <div class='ornament'>﴾ ﴿</div>
+    <div style='text-align:center;padding:18px 0 10px'>
+      <div style='font-size:2.4rem'>🕌</div>
+      <div style='font-family:Amiri,serif;font-size:1.3rem;color:#C9A84C;direction:rtl'>مصحف هاشم الذكي</div>
+      <div style='font-family:Cairo,sans-serif;font-size:.72rem;color:#4a7060;direction:rtl;margin-top:4px'>القرآن الكريم بتجربة لا مثيل لها</div>
+    </div>
+    <div class='orn'>❧ ✦ ❧</div>
+    """, unsafe_allow_html=True)
+
+    cur = st.session_state.page
+    for icon, key, label in PAGES:
+        active = "active" if cur == key else ""
+        # Use st.button for proper navigation
+        if st.button(f"{icon}  {label}", key=f"nav_{key}",
+                     use_container_width=True,
+                     type="primary" if cur == key else "secondary"):
+            st.session_state.page = key
+            st.rerun()
+
+    st.markdown("""
+    <div class='orn' style='margin-top:16px'>❧ ✦ ❧</div>
+    <div style='text-align:center;color:#2a4a35;font-family:Amiri,serif;font-size:.9rem;padding:8px'>
+    بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+    </div>
+    """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════
+#  ① الرئيسية
+# ══════════════════════════════════════════════════════════════
+def pg_home():
+    st.markdown("""
+    <div class='pg-header'>
+      <div class='orn'>﴾ ﴿</div>
+      <h1>القرآن الكريم</h1>
+      <p>مصحف هاشم الذكي — تجربة متكاملة ومبتكرة</p>
+      <div class='orn'>﴾ ﴿</div>
     </div>
     <div class='bismillah'>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
     """, unsafe_allow_html=True)
 
-    # إحصائيات
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown("""<div class='stat-box'><span class='number'>١١٤</span><span class='label'>سورة قرآنية</span></div>""", unsafe_allow_html=True)
-    with col2:
-        st.markdown("""<div class='stat-box'><span class='number'>٦٢٣٦</span><span class='label'>آية كريمة</span></div>""", unsafe_allow_html=True)
-    with col3:
-        st.markdown("""<div class='stat-box'><span class='number'>٣٠</span><span class='label'>جزءاً</span></div>""", unsafe_allow_html=True)
-    with col4:
-        completed = sum(st.session_state.khatma_progress)
-        st.markdown(f"""<div class='stat-box'><span class='number'>{completed}</span><span class='label'>سورة أتممتها</span></div>""", unsafe_allow_html=True)
+    c1,c2,c3,c4 = st.columns(4)
+    stats = [("١١٤","سورة"),("٦٢٣٦","آية"),("٣٠","جزءاً"),(str(sum(st.session_state.khatma)),"سورة أتممتها")]
+    for col,(n,l) in zip([c1,c2,c3,c4],stats):
+        with col:
+            st.markdown(f"<div class='stat-box'><span class='num'>{n}</span><span class='lbl'>{l}</span></div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='islamic-divider'>❧ ✦ ✦ ✦ ❧</div>", unsafe_allow_html=True)
+    st.markdown("<div class='orn' style='margin:20px 0'>❧ ✦ ✦ ✦ ❧</div>", unsafe_allow_html=True)
 
-    # الميزات الرئيسية
-    st.markdown("""<h3 style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl;text-align:right'>✨ الميزات الحصرية</h3>""", unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns(3)
-    features = [
-        ("🧠", "تصحيح التلاوة بالذكاء الاصطناعي", "سجّل صوتك وسيصحح لك التجويد ومخارج الحروف فورياً", "tajweed"),
-        ("💭", "القرآن بحسب حالتي", "اختر حالتك الوجدانية وسيختار القرآن الآيات المناسبة لك", "mood"),
-        ("🗺️", "خريطة القصص القرآنية", "تصفح قصص الأنبياء في خريطة تفاعلية مذهلة", "mindmap"),
-        ("🎙️", "ثمانية قراء بدون إنترنت", "استمع لأكثر من 8 مشايخ مع بث مباشر عالي الجودة", "audio"),
-        ("🤖", "المساعد القرآني", "اسأل الذكاء الاصطناعي أي سؤال قرآني وسيجيبك فوراً", "ai_assistant"),
-        ("❤️", "مكتبة القلب", "احفظ الآيات التي تؤثر فيك مع مشاعرك لتعود إليها", "heart"),
-        ("📚", "التفسير التفاعلي", "تفسير ميسّر وسبب النزول والمتشابهات اللفظية", "tafseer"),
-        ("📿", "الختمة التفاعلية", "تتبع تقدمك في ختم القرآن الكريم بشكل مرئي", "khatma"),
-        ("🌙", "أذكار اليوم", "أذكار الصباح والمساء والنوم بعداد تفاعلي", "dhikr"),
+    feats = [
+        ("📖","المصحف الشريف","اقرأ القرآن بخط عثماني مع ترجمة وتفسير فوري","mushaf"),
+        ("🎙️","الاستماع لـ 8 مشايخ","استمع للقرآن بصوت أفضل القراء بجودة عالية","audio"),
+        ("🎤","تصحيح التلاوة","الذكاء الاصطناعي يصحح تجويدك ومخارج حروفك","tajweed"),
+        ("🗺️","خريطة القصص","تصفح قصص الأنبياء في خريطة تفاعلية بصرية","mindmap"),
+        ("💭","القرآن لحالتي","آيات مختارة بذكاء حسب حالتك الوجدانية","mood"),
+        ("🤖","المساعد الذكي","اسأل أي سؤال قرآني وتلقَّ إجابة علمية فورية","ai"),
+        ("❤️","مكتبة القلب","احفظ الآيات المؤثرة مع مشاعرك وارجع إليها","heart"),
+        ("📿","الختمة","تابع تقدمك في ختم القرآن الكريم سورة سورة","khatma"),
+        ("📜","الأحاديث الصحيحة","أحاديث النبي ﷺ من البخاري ومسلم مع البحث","hadith"),
     ]
-
-    cols = [col1, col2, col3]
-    for i, (icon, title, desc, page_key) in enumerate(features):
-        with cols[i % 3]:
+    cols = st.columns(3)
+    for i,(icon,title,desc,pg) in enumerate(feats):
+        with cols[i%3]:
             st.markdown(f"""
-            <div class='feature-card'>
-                <span class='icon'>{icon}</span>
-                <h3>{title}</h3>
-                <p>{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"افتح ←", key=f"open_{page_key}_{i}", use_container_width=True):
-                st.session_state.page = page_key
+            <div class='g-card' style='min-height:130px'>
+              <div style='font-size:1.8rem;margin-bottom:8px'>{icon}</div>
+              <h3 style='font-size:.95rem'>{title}</h3>
+              <p>{desc}</p>
+            </div>""", unsafe_allow_html=True)
+            if st.button("افتح", key=f"h_open_{pg}", use_container_width=True):
+                st.session_state.page = pg
                 st.rerun()
 
-    st.markdown("<div class='islamic-divider'>❧ ✦ ✦ ✦ ❧</div>", unsafe_allow_html=True)
-
-    # تابع من حيث توقفت
-    st.markdown("""<h3 style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl;text-align:right'>📖 تابع من حيث توقفت</h3>""", unsafe_allow_html=True)
-    last_surah = st.session_state.current_surah
-    last_ayah = st.session_state.current_ayah
-    surah_info = ALL_SURAHS.get(last_surah, {})
-    col1, col2 = st.columns([3, 1])
-    with col1:
+    st.markdown("<div class='orn' style='margin:20px 0'>❧</div>", unsafe_allow_html=True)
+    si = surah_info(st.session_state.cur_surah)
+    c1,c2 = st.columns([4,1])
+    with c1:
         st.markdown(f"""
-        <div class='ayah-container'>
-            <div style='display:flex;align-items:center;gap:10px;margin-bottom:10px'>
-                <span class='surah-number-badge'>{last_surah}</span>
-                <div>
-                    <div style='color:#C9A84C;font-family:Amiri,serif;font-size:1.2rem'>سورة {surah_info.get("name","")}</div>
-                    <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.8rem'>الآية {last_ayah} من {surah_info.get("verses","")}</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        if st.button("▶ تابع القراءة", use_container_width=True):
-            st.session_state.page = "mushaf"
-            st.rerun()
+        <div class='g-card'>
+          <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:.8rem;margin-bottom:6px'>📖 تابع من حيث توقفت</div>
+          <div style='font-family:Amiri,serif;font-size:1.3rem;color:#f0ebe0;direction:rtl'>سورة {si["name"]} — الآية {st.session_state.cur_ayah}</div>
+          <div style='font-family:Cairo,sans-serif;font-size:.75rem;color:#4a7060;margin-top:4px'>{si["type"]} · {si["verses"]} آية · الجزء {si["juz"]}</div>
+        </div>""", unsafe_allow_html=True)
+    with c2:
+        if st.button("▶ تابع", use_container_width=True, type="primary"):
+            st.session_state.page = "mushaf"; st.rerun()
 
-# ==================== صفحة المصحف ====================
-def render_mushaf():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right;font-size:2rem'>📖 المصحف الشريف</h2>""", unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════
+#  ② المصحف
+# ══════════════════════════════════════════════════════════════
+def pg_mushaf():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>📖 المصحف الشريف</h2>", unsafe_allow_html=True)
 
-    # اختيار السورة
-    col1, col2, col3 = st.columns([3, 2, 2])
-    with col1:
-        surah_options = {v['name']: k for k, v in ALL_SURAHS.items()}
-        current_name = ALL_SURAHS.get(st.session_state.current_surah, {}).get('name', 'الفاتحة')
-        selected_surah_name = st.selectbox("اختر السورة", list(surah_options.keys()),
-                                            index=list(surah_options.keys()).index(current_name) if current_name in surah_options else 0,
-                                            key="surah_select")
-        st.session_state.current_surah = surah_options[selected_surah_name]
+    # controls row
+    c1,c2,c3,c4 = st.columns([3,1,1,2])
+    with c1:
+        opts = {SURAH_NAMES[i]: i+1 for i in range(114)}
+        cur_name = SURAH_NAMES[st.session_state.cur_surah-1]
+        sel = st.selectbox("السورة", list(opts.keys()),
+                           index=st.session_state.cur_surah-1, key="ms_surah")
+        if opts[sel] != st.session_state.cur_surah:
+            st.session_state.cur_surah = opts[sel]
+            st.session_state.cur_ayah = 1
+    with c2:
+        max_a = SURAH_VERSES[st.session_state.cur_surah-1]
+        a_val = st.number_input("من آية", 1, max_a,
+                                 min(st.session_state.cur_ayah, max_a), key="ms_ayah")
+        st.session_state.cur_ayah = int(a_val)
+    with c3:
+        fs = st.slider("الخط", 1.4, 3.2, st.session_state.font_size, 0.1, key="ms_font")
+        st.session_state.font_size = fs
+    with c4:
+        tr = st.checkbox("الترجمة", st.session_state.show_trans, key="ms_tr")
+        st.session_state.show_trans = tr
+        tf = st.checkbox("تفسير مختصر", st.session_state.show_tafseer, key="ms_tf")
+        st.session_state.show_tafseer = tf
 
-    with col2:
-        max_ayah = ALL_SURAHS.get(st.session_state.current_surah, {}).get('verses', 1)
-        st.session_state.current_ayah = st.number_input("من الآية", min_value=1, max_value=max_ayah,
-                                                          value=min(st.session_state.current_ayah, max_ayah), key="ayah_input")
+    sn = st.session_state.cur_surah
+    si = surah_info(sn)
 
-    with col3:
-        font_size = st.slider("حجم الخط", 1.5, 3.5, st.session_state.font_size, 0.1, key="font_slider")
-        st.session_state.font_size = font_size
+    st.markdown(f"""
+    <div class='surah-hdr'>
+      <div class='smeta'>{si["type"]} · {si["verses"]} آية · الجزء {si["juz"]}</div>
+      <div class='sname'>سُورَةُ {si["name"]}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    if sn != 9:
+        st.markdown("<div class='bismillah'>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>", unsafe_allow_html=True)
 
-    # خيارات العرض
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        show_trans = st.checkbox("الترجمة", value=st.session_state.show_translation, key="show_trans")
-        st.session_state.show_translation = show_trans
-    with col2:
-        show_tafseer_inline = st.checkbox("التفسير المختصر", value=False, key="show_tafseer_inline")
-    with col3:
-        focus = st.checkbox("وضع التركيز 🎯", value=st.session_state.focus_mode, key="focus_toggle")
-        st.session_state.focus_mode = focus
-    with col4:
-        if st.button("🔖 إضافة علامة", key="add_bookmark_btn"):
-            bookmark = {"surah": st.session_state.current_surah, "ayah": st.session_state.current_ayah,
-                       "surah_name": ALL_SURAHS.get(st.session_state.current_surah, {}).get('name', ''), "time": datetime.now().strftime("%Y-%m-%d %H:%M")}
-            if bookmark not in st.session_state.bookmarks:
-                st.session_state.bookmarks.append(bookmark)
-                st.success("✅ تمت إضافة الإشارة المرجعية")
+    with st.spinner("جارٍ تحميل الآيات…"):
+        data = fetch_surah(sn)
 
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
+    if not data:
+        st.error("⚠️ تعذّر تحميل السورة. تحقق من الاتصال بالإنترنت.")
+        return
 
-    # جلب بيانات السورة
-    surah_num = st.session_state.current_surah
-    surah_info = ALL_SURAHS.get(surah_num, {})
+    ar_ayahs  = data[0]["ayahs"]
+    en_ayahs  = data[1]["ayahs"] if len(data) > 1 else []
+    start = st.session_state.cur_ayah - 1
+    show_n = 15  # عرض 15 آية
 
-    # عرض اسم السورة
-    if not st.session_state.focus_mode:
-        st.markdown(f"""
-        <div style='text-align:center; margin:20px 0; padding:20px; background:linear-gradient(135deg,#0d2018,#162a1f); border:1px solid #C9A84C; border-radius:16px'>
-            <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.85rem;direction:rtl'>{surah_info.get("type","مكية")} • {surah_info.get("verses","?")} آية • الجزء {surah_info.get("juz","?")}</div>
-            <div style='color:#C9A84C;font-family:Amiri,serif;font-size:2.5rem;margin:5px 0'>سُورَةُ {surah_info.get("name","")}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    for i, ayah in enumerate(ar_ayahs[start:start+show_n]):
+        an = start + i + 1
+        txt = ayah["text"]
+        en  = en_ayahs[start+i]["text"] if en_ayahs and start+i < len(en_ayahs) else ""
 
-        if surah_num != 9:  # لا بسملة في التوبة
-            st.markdown("""<div class='bismillah'>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>""", unsafe_allow_html=True)
+        tr_html = f"<div class='ayah-trans'>{en}</div>" if tr and en else ""
+        tf_html = ""
+        if tf:
+            tf_html = f"<div class='ayah-trans' style='color:#6a9a7a;font-style:normal'>💡 للحصول على التفسير اضغط زر التفسير أدناه</div>"
 
-    # جلب الآيات
-    with st.spinner("جارٍ تحميل الآيات..."):
-        data = get_quran_data(surah_num)
-        trans_data = get_translation(surah_num) if show_trans else None
+        aud = audio_url(sn, an, st.session_state.sheikh)
 
-    if data and data.get('code') == 200:
-        editions = data['data']
-        arabic_edition = editions[0] if isinstance(editions, list) else editions
+        col_txt, col_act = st.columns([5,1])
+        with col_txt:
+            st.markdown(f"""
+            <div class='ayah-card'>
+              <div style='display:flex;align-items:flex-start;gap:12px'>
+                <span class='ayah-num'>{an}</span>
+                <span class='ayah-text' style='font-size:{st.session_state.font_size}rem'>{txt}</span>
+              </div>
+              {tr_html}{tf_html}
+            </div>""", unsafe_allow_html=True)
+        with col_act:
+            # Audio per ayah
+            st.markdown(f"""
+            <audio controls style='width:100%;height:32px;margin-top:12px'>
+              <source src='{aud}' type='audio/mpeg'>
+            </audio>""", unsafe_allow_html=True)
+            if st.button("❤️", key=f"heart_{sn}_{an}", help="مكتبة القلب"):
+                entry = {"surah":sn,"ayah":an,"text":txt,"surah_name":si["name"],
+                         "mood":"","time":datetime.now().strftime("%Y-%m-%d")}
+                if entry not in st.session_state.heart:
+                    st.session_state.heart.append(entry)
+                    st.toast("✅ أُضيفت لمكتبة القلب")
+            if st.button("🔖", key=f"bm_{sn}_{an}", help="إشارة مرجعية"):
+                bm = {"surah":sn,"ayah":an,"surah_name":si["name"],
+                      "time":datetime.now().strftime("%Y-%m-%d %H:%M")}
+                if bm not in st.session_state.bookmarks:
+                    st.session_state.bookmarks.append(bm)
+                    st.toast("✅ أُضيفت إشارة مرجعية")
+            if tf:
+                if st.button("📚", key=f"tf_{sn}_{an}", help="تفسير"):
+                    with st.spinner("جارٍ التفسير…"):
+                        res = claude_ask(f"فسّر الآية {an} من سورة {si['name']} تفسيراً ميسراً موجزاً لا يتجاوز 5 أسطر.")
+                    st.info(res)
 
-        ayahs = arabic_edition.get('ayahs', [])
-        trans_ayahs = []
-        if trans_data and trans_data.get('code') == 200:
-            trans_ayahs = trans_data['data'].get('ayahs', [])
+    # navigation
+    st.markdown("<div class='orn'>❧</div>", unsafe_allow_html=True)
+    c1,c2,c3,c4,c5 = st.columns(5)
+    with c1:
+        if sn > 1:
+            if st.button("⟵ السورة السابقة", use_container_width=True):
+                st.session_state.cur_surah -= 1; st.session_state.cur_ayah=1; st.rerun()
+    with c2:
+        if start > 0:
+            if st.button("▲ آيات سابقة", use_container_width=True):
+                st.session_state.cur_ayah = max(1, start-show_n+1); st.rerun()
+    with c3:
+        if st.button("🏠 الرئيسية", use_container_width=True):
+            st.session_state.page="home"; st.rerun()
+    with c4:
+        if start+show_n < SURAH_VERSES[sn-1]:
+            if st.button("▼ آيات تالية", use_container_width=True):
+                st.session_state.cur_ayah = start+show_n+1; st.rerun()
+    with c5:
+        if sn < 114:
+            if st.button("السورة التالية ⟶", use_container_width=True):
+                st.session_state.cur_surah += 1; st.session_state.cur_ayah=1; st.rerun()
 
-        # نبدأ من الآية المختارة
-        start_idx = st.session_state.current_ayah - 1
-        display_ayahs = ayahs[start_idx:start_idx + 20]  # عرض 20 آية
-        display_trans = trans_ayahs[start_idx:start_idx + 20] if trans_ayahs else []
+    # حفظ الموضع
+    st.session_state.cur_ayah = int(a_val)
 
-        for i, ayah in enumerate(display_ayahs):
-            ayah_num = start_idx + i + 1
-            ayah_text = ayah.get('text', '')
-            trans_text = display_trans[i].get('text', '') if i < len(display_trans) else ''
-
-            if st.session_state.focus_mode:
-                # وضع التركيز
-                st.markdown(f"""
-                <div style='text-align:center; padding:40px 20px; margin:20px 0;'>
-                    <div style='font-family:Amiri,serif;font-size:{st.session_state.font_size * 0.7}rem;color:#f5f0e8;line-height:3;direction:rtl'>
-                        {ayah_text} ﴿{ayah_num}﴾
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                col_main, col_actions = st.columns([5, 1])
-                with col_main:
-                    trans_html = f"<div class='ayah-translation'>{trans_text}</div>" if trans_text and show_trans else ""
-                    st.markdown(f"""
-                    <div class='ayah-container'>
-                        <div style='display:flex;align-items:flex-start;gap:12px'>
-                            <span class='ayah-number'>{ayah_num}</span>
-                            <div class='ayah-text' style='font-size:{st.session_state.font_size}rem'>
-                                {ayah_text}
-                            </div>
-                        </div>
-                        {trans_html}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                with col_actions:
-                    # أزرار الآية
-                    audio_url = get_audio_url(surah_num, ayah_num, st.session_state.selected_sheikh)
-                    st.markdown(f"""
-                    <audio controls style='width:100%;margin-top:10px'>
-                        <source src='{audio_url}' type='audio/mpeg'>
-                    </audio>
-                    """, unsafe_allow_html=True)
-
-                    if st.button("❤️", key=f"heart_{surah_num}_{ayah_num}", help="أضف لمكتبة القلب"):
-                        item = {"surah": surah_num, "ayah": ayah_num, "text": ayah_text,
-                               "surah_name": surah_info.get('name',''), "mood": "", "time": datetime.now().strftime("%Y-%m-%d")}
-                        if item not in st.session_state.heart_library:
-                            st.session_state.heart_library.append(item)
-                            st.success("❤️")
-
-                    if show_tafseer_inline:
-                        with st.expander("📚 تفسير", expanded=False):
-                            st.markdown(f"""<div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.85rem;direction:rtl'>
-                            تفسير ميسّر للآية {ayah_num} من سورة {surah_info.get('name','')}
-                            </div>""", unsafe_allow_html=True)
-
-        # أزرار التنقل
-        st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.session_state.current_surah > 1:
-                if st.button("⟵ السورة السابقة", use_container_width=True):
-                    st.session_state.current_surah -= 1
-                    st.session_state.current_ayah = 1
-                    st.rerun()
-        with col2:
-            if st.button("🏠 الرئيسية", use_container_width=True):
-                st.session_state.page = "home"
-                st.rerun()
-        with col3:
-            if st.session_state.current_surah < 114:
-                if st.button("السورة التالية ⟶", use_container_width=True):
-                    st.session_state.current_surah += 1
-                    st.session_state.current_ayah = 1
-                    st.rerun()
-    else:
-        st.warning("⚠️ تعذّر تحميل الآيات. تأكد من اتصالك بالإنترنت.")
-
-# ==================== صفحة الاستماع ====================
-def render_audio():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🎙️ مشغّل التلاوة</h2>""", unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════
+#  ③ مشغّل التلاوة
+# ══════════════════════════════════════════════════════════════
+def pg_audio():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🎙️ مشغّل التلاوة</h2>", unsafe_allow_html=True)
 
     # اختيار الشيخ
-    st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl;font-size:1rem'>🕌 اختر الشيخ:</p>""", unsafe_allow_html=True)
-    sheikh_html = "<div class='sheikh-selector'>"
-    for key, name in SHEIKHS.items():
-        active_class = "active" if st.session_state.selected_sheikh == key else ""
-        sheikh_html += f"<span class='sheikh-btn {active_class}'>{name}</span>"
-    sheikh_html += "</div>"
-    st.markdown(sheikh_html, unsafe_allow_html=True)
-
-    # اختيار الشيخ من selectbox
-    sheikh_names = list(SHEIKHS.values())
-    sheikh_keys = list(SHEIKHS.keys())
-    current_idx = sheikh_keys.index(st.session_state.selected_sheikh) if st.session_state.selected_sheikh in sheikh_keys else 0
-    selected_name = st.selectbox("الشيخ", sheikh_names, index=current_idx, key="sheikh_select_audio")
-    st.session_state.selected_sheikh = sheikh_keys[sheikh_names.index(selected_name)]
-
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
+    sk_names = list(SHEIKHS.values())
+    sk_keys  = list(SHEIKHS.keys())
+    cur_idx  = sk_keys.index(st.session_state.sheikh) if st.session_state.sheikh in sk_keys else 0
+    sel_name = st.selectbox("🕌 اختر الشيخ / القارئ", sk_names, index=cur_idx, key="aud_sheikh")
+    st.session_state.sheikh = sk_keys[sk_names.index(sel_name)]
 
     # اختيار السورة والآية
-    col1, col2 = st.columns(2)
-    with col1:
-        surah_options = {v['name']: k for k, v in ALL_SURAHS.items()}
-        current_name = ALL_SURAHS.get(st.session_state.current_surah, {}).get('name', 'الفاتحة')
-        sel_name = st.selectbox("السورة", list(surah_options.keys()),
-                                 index=list(surah_options.keys()).index(current_name) if current_name in surah_options else 0,
-                                 key="audio_surah")
-        surah_num = surah_options[sel_name]
-        st.session_state.current_surah = surah_num
+    c1,c2 = st.columns(2)
+    with c1:
+        sel_s = st.selectbox("السورة", SURAH_NAMES,
+                              index=st.session_state.cur_surah-1, key="aud_surah")
+        sn = SURAH_NAMES.index(sel_s)+1
+        st.session_state.cur_surah = sn
+    with c2:
+        max_a = SURAH_VERSES[sn-1]
+        an = st.number_input("الآية", 1, max_a,
+                              min(st.session_state.cur_ayah, max_a), key="aud_ayah")
+        st.session_state.cur_ayah = int(an)
 
-    with col2:
-        max_a = ALL_SURAHS.get(surah_num, {}).get('verses', 1)
-        ayah_num = st.number_input("الآية", min_value=1, max_value=max_a,
-                                    value=min(st.session_state.current_ayah, max_a), key="audio_ayah")
-        st.session_state.current_ayah = ayah_num
+    si = surah_info(sn)
+    aud = audio_url(sn, int(an), st.session_state.sheikh)
 
-    # مشغل الصوت الرئيسي
-    audio_url = get_audio_url(surah_num, ayah_num, st.session_state.selected_sheikh)
-    surah_info = ALL_SURAHS.get(surah_num, {})
-
+    # مشغل الآية الواحدة
     st.markdown(f"""
-    <div style='background:linear-gradient(135deg,#0d2018,#162a1f);border:1px solid #C9A84C;border-radius:20px;padding:30px;text-align:center;margin:20px 0'>
-        <div style='color:#C9A84C;font-family:Amiri,serif;font-size:2rem;margin-bottom:10px'>
-            سورة {surah_info.get("name","")} — الآية {ayah_num}
-        </div>
-        <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.9rem;margin-bottom:20px'>
-            🎤 {selected_name}
-        </div>
-        <audio controls style='width:80%;border-radius:50px' autoplay>
-            <source src='{audio_url}' type='audio/mpeg'>
-            متصفحك لا يدعم تشغيل الصوت
-        </audio>
-    </div>
-    """, unsafe_allow_html=True)
+    <div class='audio-wrap'>
+      <div class='aw-title'>سورة {si["name"]} — الآية {int(an)}</div>
+      <div class='aw-meta'>🎤 {sel_name} &nbsp;|&nbsp; {si["type"]} · الجزء {si["juz"]}</div>
+      <audio controls autoplay style='width:85%;border-radius:40px'>
+        <source src='{aud}' type='audio/mpeg'>
+        متصفحك لا يدعم تشغيل الصوت
+      </audio>
+    </div>""", unsafe_allow_html=True)
 
-    # زر "أثرت فيّ"
-    st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl;margin-top:20px'>💭 كيف أثرت فيك هذه الآية؟</p>""", unsafe_allow_html=True)
-    emotions = ["🥺 أبكتني", "😌 اطمأننت", "💪 قوّت عزيمتي", "🤲 دفعتني للدعاء", "💡 فتحت لي آفاقاً", "❤️ ملأت قلبي", "😔 ذكّرتني بذنوبي", "🌟 أشعلت أملي"]
-    cols = st.columns(4)
-    for i, emo in enumerate(emotions):
-        with cols[i % 4]:
+    # مشغل السورة كاملة
+    st.markdown("<div class='orn'>❧</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='g-card' style='text-align:center'>
+      <h3 style='margin-bottom:12px'>▶ تشغيل سورة {si["name"]} كاملة</h3>
+      <p style='margin-bottom:14px'>استمع للسورة كاملة بصوت {sel_name}</p>
+      <audio controls style='width:88%;border-radius:40px'>
+        <source src='https://download.quranicaudio.com/quran/{SHEIKH_CDN.get(st.session_state.sheikh,"Alafasy_128kbps")}/{str(sn).zfill(3)}.mp3' type='audio/mpeg'>
+      </audio>
+      <div style='font-family:Cairo,sans-serif;font-size:.72rem;color:#4a7060;margin-top:10px'>
+        ⓘ إذا لم يعمل الصوت الكامل جرّب الاستماع آية آية من المصحف
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    # مشاعر أثناء الاستماع
+    st.markdown("<div class='orn'>❧</div>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>💭 كيف أثرت فيك هذه الآية؟ اضغط لتحفظها في مكتبة القلب:</p>", unsafe_allow_html=True)
+    emotions = ["🥺 أبكتني","😌 اطمأننت","💪 قوّت عزيمتي","🤲 دفعتني للدعاء","💡 فتحت لي آفاقاً","❤️ ملأت قلبي"]
+    cols = st.columns(3)
+    for i,emo in enumerate(emotions):
+        with cols[i%3]:
             if st.button(emo, key=f"emo_{i}", use_container_width=True):
-                # جلب نص الآية وإضافتها لمكتبة القلب
-                item = {"surah": surah_num, "ayah": ayah_num,
-                       "surah_name": surah_info.get('name',''), "mood": emo,
-                       "time": datetime.now().strftime("%Y-%m-%d")}
-                st.session_state.heart_library.append(item)
-                st.success(f"✅ تم حفظ الآية في مكتبة القلب بمشاعر: {emo}")
+                with st.spinner("جارٍ جلب نص الآية…"):
+                    data = fetch_surah(sn)
+                if data:
+                    txt = data[0]["ayahs"][int(an)-1]["text"]
+                else:
+                    txt = f"الآية {int(an)}"
+                entry = {"surah":sn,"ayah":int(an),"text":txt,
+                         "surah_name":si["name"],"mood":emo,
+                         "time":datetime.now().strftime("%Y-%m-%d")}
+                st.session_state.heart.append(entry)
+                st.toast(f"✅ حُفظت في مكتبة القلب: {emo}")
 
-    # تشغيل السورة كاملة
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
-    st.markdown("""<h3 style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>▶ تشغيل السورة كاملة</h3>""", unsafe_allow_html=True)
-
-    # رابط السورة كاملة من Islamic Network
-    reciter_id = st.session_state.selected_sheikh.replace("ar.", "")
-    full_surah_url = f"https://cdn.islamic.network/quran/audio-surah/128/{reciter_id}/{surah_num}.mp3"
-    st.markdown(f"""
-    <audio controls style='width:100%;border-radius:50px;margin:10px 0'>
-        <source src='{full_surah_url}' type='audio/mpeg'>
-    </audio>
-    """, unsafe_allow_html=True)
-
-# ==================== صفحة تصحيح التلاوة ====================
-def render_tajweed():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🧠 تصحيح التلاوة بالذكاء الاصطناعي</h2>""", unsafe_allow_html=True)
+# ══════════════════════════════════════════════════════════════
+#  ④ تصحيح التلاوة بالذكاء الاصطناعي
+# ══════════════════════════════════════════════════════════════
+def pg_tajweed():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🎤 تصحيح التلاوة بالذكاء الاصطناعي</h2>", unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='notification'>
-        🎯 <strong>كيف يعمل هذا الذكاء؟</strong><br>
-        اكتب الآية التي تريد تتدرب عليها، ثم اكتب ما قرأته (بالشكل الذي نطقته) وسيحلل الذكاء الاصطناعي أخطاءك في التجويد ومخارج الحروف والمد والغنة وغيرها.
-    </div>
-    """, unsafe_allow_html=True)
+    <div class='info-box'>
+      🎯 <strong>كيف يعمل التصحيح؟</strong><br>
+      ١- اختر الآية التي تريد التدرب عليها<br>
+      ٢- اكتب ما قرأته كما نطقته (بدون تشكيل أو بتشكيل ناقص)<br>
+      ٣- سيحلل الذكاء الاصطناعي أخطاءك في التجويد ومخارج الحروف والمد والغنة وكل أحكام التلاوة
+    </div>""", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("""<p style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>📖 الآية الصحيحة:</p>""", unsafe_allow_html=True)
-        correct_ayah = st.text_area("الآية الصحيحة", placeholder="اكتب أو الصق الآية هنا...",
-                                     height=120, key="correct_text",
-                                     value="إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ")
-    with col2:
-        st.markdown("""<p style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>🎤 ما قرأتَه (بدون تشكيل):</p>""", unsafe_allow_html=True)
-        user_reading = st.text_area("ما قرأته", placeholder="اكتب ما قرأته...",
-                                     height=120, key="user_text",
-                                     value="انا اعطيناك الكوثر")
+    c1,c2 = st.columns(2)
+    with c1:
+        sel_s = st.selectbox("السورة", SURAH_NAMES,
+                              index=st.session_state.cur_surah-1, key="tj_surah")
+        sn = SURAH_NAMES.index(sel_s)+1
+        max_a = SURAH_VERSES[sn-1]
+    with c2:
+        an = st.number_input("رقم الآية", 1, max_a, 1, key="tj_ayah")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        tajweed_level = st.selectbox("مستواك في التجويد", ["مبتدئ", "متوسط", "متقدم"], key="tajweed_level")
-    with col2:
-        check_types = st.multiselect("ما الذي تريد فحصه؟",
-                                      ["أحكام النون الساكنة", "المدود", "الوقف والابتداء", "مخارج الحروف", "الصفات", "التشكيل والضبط"],
-                                      default=["أحكام النون الساكنة", "المدود", "مخارج الحروف"],
-                                      key="check_types")
+    # جلب نص الآية تلقائياً
+    correct_text = ""
+    if st.button("📖 جلب نص الآية", key="fetch_ayah_btn"):
+        with st.spinner("جارٍ جلب الآية…"):
+            d = fetch_surah(sn)
+        if d:
+            correct_text = d[0]["ayahs"][int(an)-1]["text"]
+            st.session_state["tj_correct"] = correct_text
+            st.success(f"✅ تم جلب الآية: {correct_text[:60]}…")
 
-    if st.button("🔍 حلّل تلاوتي", use_container_width=True, type="primary", key="analyze_btn"):
-        if correct_ayah and user_reading:
-            with st.spinner("🧠 جارٍ التحليل بالذكاء الاصطناعي..."):
-                prompt = f"""أنت معلم قرآن كريم خبير في علم التجويد. حلّل القراءة التالية وأعطِ تصحيحاً تفصيلياً.
+    c1,c2 = st.columns(2)
+    with c1:
+        st.markdown("<p style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>📖 الآية الصحيحة (أو أكتبها يدوياً):</p>", unsafe_allow_html=True)
+        correct = st.text_area("الآية الصحيحة",
+                                value=st.session_state.get("tj_correct",""),
+                                height=130, key="tj_correct_input",
+                                placeholder="اكتب أو الصق نص الآية هنا…")
+    with c2:
+        st.markdown("<p style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>🎤 ما قرأته (اكتب نطقك كما قرأت):</p>", unsafe_allow_html=True)
+        reading = st.text_area("ما قرأته",
+                                height=130, key="tj_reading",
+                                placeholder="اكتب ما قرأته بالضبط، مثلاً: الحمد لله رب العالمين…")
 
-المستوى: {tajweed_level}
-الجوانب المطلوب فحصها: {', '.join(check_types)}
+    c1,c2 = st.columns(2)
+    with c1:
+        level = st.selectbox("مستواك في التجويد", ["مبتدئ","متوسط","متقدم"], key="tj_level")
+    with c2:
+        aspects = st.multiselect("ما الذي تريد فحصه؟",
+                                  ["مخارج الحروف","أحكام النون الساكنة والتنوين","المدود","الوقف والابتداء","الصفات","التشكيل"],
+                                  default=["مخارج الحروف","أحكام النون الساكنة والتنوين","المدود"],
+                                  key="tj_aspects")
 
-الآية الصحيحة: {correct_ayah}
-ما قرأه المتعلم: {user_reading}
-
-قدّم تحليلاً شاملاً يتضمن:
-1. ✅ الصحيح في قراءته
-2. ❌ الأخطاء مع شرح سبب الخطأ
-3. 🔊 كيفية النطق الصحيح
-4. 📚 القاعدة التجويدية المتعلقة بالخطأ
-5. 💡 نصائح للتحسين
-6. ⭐ تقييم عام من 10
-
-قدّم الإجابة بالعربية وبأسلوب تشجيعي مع رموز واضحة."""
-
-                try:
-                    response = requests.post(
-                        "https://api.anthropic.com/v1/messages",
-                        headers={"Content-Type": "application/json"},
-                        json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                              "messages": [{"role": "user", "content": prompt}]},
-                        timeout=30
-                    )
-                    if response.status_code == 200:
-                        result = response.json()['content'][0]['text']
-                        st.markdown(f"""
-                        <div class='hadith-card' style='margin-top:20px'>
-                            <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:1.1rem;margin-bottom:15px;direction:rtl'>
-                                🧠 نتيجة التحليل التجويدي
-                            </div>
-                            <div style='color:#e8f5e9;font-family:Cairo,sans-serif;direction:rtl;line-height:2;white-space:pre-wrap'>
-                                {result}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.error("⚠️ حدث خطأ في الاتصال بالذكاء الاصطناعي")
-                except Exception as e:
-                    st.error(f"خطأ: {e}")
+    if st.button("🔍 صحّح تلاوتي الآن", use_container_width=True, type="primary", key="tj_go"):
+        if not correct.strip():
+            st.warning("⚠️ أدخل نص الآية أولاً (اضغط 'جلب نص الآية' أو اكتبه يدوياً)")
+        elif not reading.strip():
+            st.warning("⚠️ اكتب ما قرأته لنتمكن من التصحيح")
         else:
-            st.warning("⚠️ يرجى إدخال الآية وما قرأته")
+            with st.spinner("🧠 الذكاء الاصطناعي يحلّل تلاوتك…"):
+                prompt = f"""أنت معلم قرآن كريم خبير في علم التجويد. المتعلم مستواه: {level}.
 
-    # قائمة أحكام التجويد
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
-    st.markdown("""<h3 style='color:#C9A84C;font-family:Cairo,sans-serif;direction:rtl'>📚 أحكام التجويد الأساسية</h3>""", unsafe_allow_html=True)
+الآية الصحيحة: {correct}
+ما قرأه المتعلم: {reading}
+الجوانب المطلوب فحصها: {', '.join(aspects)}
 
-    tajweed_rules = [
-        ("الإظهار الحلقي", "إذا جاءت النون الساكنة أو التنوين قبل حروف الحلق (ء ه ع ح غ خ) تُقرأ بوضوح بدون غنة", "#C9A84C"),
-        ("الإدغام", "إذا جاءت النون الساكنة أو التنوين قبل (ي ر م ل و ن) تُدغم فيها", "#52b788"),
-        ("الإقلاب", "إذا جاءت النون الساكنة أو التنوين قبل الباء تُقلب إلى ميم مخفاة", "#a0c4ff"),
-        ("الإخفاء الحقيقي", "إذا جاءت النون الساكنة أو التنوين قبل 15 حرفاً تُخفى مع الغنة", "#ffb347"),
-        ("المد الطبيعي", "مدّ حرف المد بمقدار حركتين طبيعيتين", "#C9A84C"),
-        ("المد المتصل", "حرف المد وبعده همزة في كلمة واحدة، يمد 4-5 حركات", "#52b788"),
-    ]
+قدّم تحليلاً تفصيلياً دقيقاً يتضمن:
 
-    cols = st.columns(2)
-    for i, (rule, explanation, color) in enumerate(tajweed_rules):
-        with cols[i % 2]:
+✅ **ما أجاده المتعلم:**
+[اذكر ما قرأه صحيحاً]
+
+❌ **الأخطاء مع شرحها:**
+[لكل خطأ: الكلمة الخاطئة → الصواب → القاعدة التجويدية → كيفية النطق الصحيح]
+
+📚 **القواعد التجويدية المتعلقة بهذه الآية:**
+[اذكر الأحكام التجويدية الموجودة في الآية]
+
+💡 **نصائح للتحسين:**
+[نصائح عملية محددة]
+
+⭐ **التقييم: __ /١٠**
+
+كن دقيقاً وتشجيعياً."""
+                res = claude_ask(prompt, system="أنت معلم قرآن كريم خبير في علم التجويد. تحلّل التلاوة بدقة وتقدم تصحيحاً شاملاً بالعربية.")
             st.markdown(f"""
-            <div class='ayah-container' style='margin:8px 0'>
-                <div style='color:{color};font-family:Amiri,serif;font-size:1.2rem;margin-bottom:8px'>{rule}</div>
-                <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.85rem'>{explanation}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            <div class='tj-result'>
+              <h4>🧠 نتيجة التحليل التجويدي — سورة {sel_s} الآية {int(an)}</h4>
+              <p>{res}</p>
+            </div>""", unsafe_allow_html=True)
 
-# ==================== خريطة القصص القرآنية ====================
-def render_mindmap():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🗺️ خريطة القصص القرآنية التفاعلية</h2>""", unsafe_allow_html=True)
+    st.markdown("<div class='orn' style='margin:20px 0'>❧</div>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>📚 مرجع سريع لأحكام التجويد</h3>", unsafe_allow_html=True)
+    rules = [
+        ("الإظهار الحلقي","النون الساكنة أو التنوين + حروف الحلق (ء ه ع ح غ خ) → تُقرأ واضحة بلا غنة","#C9A84C"),
+        ("الإدغام بغنة","النون الساكنة + (ي ن م و) → تُدغم مع غنة","#52b788"),
+        ("الإدغام بلا غنة","النون الساكنة + (ر ل) → تُدغم بلا غنة","#7fb899"),
+        ("الإقلاب","النون الساكنة + الباء → تُقلب ميماً مع إخفاء","#a0c4ff"),
+        ("الإخفاء الحقيقي","النون الساكنة + 15 حرفاً → تُخفى مع غنة","#ffb347"),
+        ("المد الطبيعي","حرف المد بلا سبب → حركتان","#C9A84C"),
+        ("المد المتصل","حرف المد + همزة في كلمة → 4-5 حركات واجب","#52b788"),
+        ("المد المنفصل","حرف المد + همزة في كلمة تالية → 4-5 حركات جائز","#7fb899"),
+    ]
+    c1,c2 = st.columns(2)
+    for i,(r,e,col) in enumerate(rules):
+        with (c1 if i%2==0 else c2):
+            st.markdown(f"""
+            <div class='g-card' style='margin:5px 0'>
+              <div style='color:{col};font-family:Amiri,serif;font-size:1.1rem;margin-bottom:6px'>{r}</div>
+              <p style='font-size:.8rem'>{e}</p>
+            </div>""", unsafe_allow_html=True)
 
-    stories = {
-        "قصة سيدنا موسى": {
-            "icon": "🌊",
-            "color": "#52b788",
-            "stages": [
-                {"stage": "الميلاد والإلقاء في النهر", "surahs": ["طه:38-39", "القصص:7-8"], "lesson": "توكّل الأم على الله"},
-                {"stage": "في قصر فرعون", "surahs": ["القصص:9-13", "طه:40"], "lesson": "حفظ الله لأوليائه"},
-                {"stage": "قتل القبطي والفرار", "surahs": ["القصص:15-21"], "lesson": "التوبة والاستغفار"},
-                {"stage": "في مدين والزواج", "surahs": ["القصص:22-28"], "lesson": "الأمانة والعمل"},
-                {"stage": "الرسالة والعصا", "surahs": ["طه:9-24", "النمل:7-12"], "lesson": "الثقة بالله"},
-                {"stage": "مواجهة فرعون", "surahs": ["طه:43-76", "الشعراء:16-51"], "lesson": "الشجاعة في الحق"},
-                {"stage": "عبور البحر", "surahs": ["البقرة:50", "الشعراء:63-68"], "lesson": "النجاة بالإيمان"},
-                {"stage": "ألواح التوراة", "surahs": ["الأعراف:144-154"], "lesson": "شرف الحكمة الإلهية"},
-            ]
-        },
-        "قصة سيدنا يوسف": {
-            "icon": "⭐",
-            "color": "#C9A84C",
-            "stages": [
-                {"stage": "الرؤيا وغيرة الإخوة", "surahs": ["يوسف:4-5"], "lesson": "الصبر والكتمان"},
-                {"stage": "الإلقاء في البئر", "surahs": ["يوسف:9-18"], "lesson": "الحسد وعواقبه"},
-                {"stage": "في مصر وإغراء امرأة العزيز", "surahs": ["يوسف:21-29"], "lesson": "العفة والاستعاذة"},
-                {"stage": "السجن والتعبير", "surahs": ["يوسف:36-42"], "lesson": "الدعوة في المحن"},
-                {"stage": "تفسير رؤيا الملك", "surahs": ["يوسف:43-49"], "lesson": "العلم نعمة"},
-                {"stage": "التمكين في الأرض", "surahs": ["يوسف:54-57"], "lesson": "الكفاءة والأمانة"},
-                {"stage": "لقاء الإخوة وعودة البيت", "surahs": ["يوسف:58-93"], "lesson": "العفو والتسامح"},
-                {"stage": "لم الشمل واجتماع الأسرة", "surahs": ["يوسف:94-101"], "lesson": "الجزاء الحسن"},
-            ]
-        },
-        "قصة سيدنا إبراهيم": {
-            "icon": "🔥",
-            "color": "#ff7043",
-            "stages": [
-                {"stage": "الدعوة لأبيه وقومه", "surahs": ["الأنعام:74-83", "مريم:41-48"], "lesson": "الصدق مع الوالدين"},
-                {"stage": "كسر الأصنام", "surahs": ["الأنبياء:51-67"], "lesson": "الشجاعة في نشر الحق"},
-                {"stage": "النار والنجاة", "surahs": ["الأنبياء:68-70", "العنكبوت:24"], "lesson": "النار برد وسلام"},
-                {"stage": "الهجرة وبناء الكعبة", "surahs": ["إبراهيم:35-41", "البقرة:127"], "lesson": "إحياء شعائر الله"},
-                {"stage": "ذبح الولد", "surahs": ["الصافات:100-113"], "lesson": "الفداء والطاعة الكاملة"},
-            ]
-        },
+# ══════════════════════════════════════════════════════════════
+#  ⑤ خريطة القصص القرآنية
+# ══════════════════════════════════════════════════════════════
+def pg_mindmap():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🗺️ خريطة القصص القرآنية التفاعلية</h2>", unsafe_allow_html=True)
+
+    STORIES = {
+        "سيدنا موسى عليه السلام 🌊": {
+            "color":"#52b788",
+            "stages":[
+                {"t":"الميلاد والإلقاء في النهر","refs":["طه:38-39","القصص:7-8"],"l":"توكّل الأم على الله وحسن الظن به"},
+                {"t":"النشأة في قصر فرعون","refs":["القصص:9-13","طه:40"],"l":"حفظ الله لأوليائه في أحلك الأماكن"},
+                {"t":"قتل القبطي والفرار","refs":["القصص:15-21"],"l":"التوبة والعودة إلى الله والهروب من الظلم"},
+                {"t":"في مدين والزواج","refs":["القصص:22-28"],"l":"الأمانة في العمل والعطاء دون انتظار"},
+                {"t":"الرسالة وآية العصا","refs":["طه:9-24","النمل:7-12"],"l":"الثقة المطلقة بالله عند تلقي المهمة الكبرى"},
+                {"t":"مواجهة فرعون","refs":["طه:43-76","الشعراء:16-51"],"l":"الشجاعة في قول الحق ومواجهة الطغيان"},
+                {"t":"عبور البحر والنجاة","refs":["البقرة:50","الشعراء:63-68"],"l":"النجاة تأتي من حيث لا يُتوقع عند ذروة الأزمة"},
+                {"t":"ألواح التوراة","refs":["الأعراف:144-154"],"l":"شرف الحكمة الإلهية والمسؤولية تجاهها"},
+            ]},
+        "سيدنا يوسف عليه السلام ⭐": {
+            "color":"#C9A84C",
+            "stages":[
+                {"t":"الرؤيا وغيرة الإخوة","refs":["يوسف:4-5"],"l":"الصبر والكتمان عند الحسد"},
+                {"t":"الإلقاء في البئر","refs":["يوسف:9-18"],"l":"الحسد وعواقبه الوخيمة على صاحبه"},
+                {"t":"بيعه في مصر","refs":["يوسف:19-22"],"l":"الله يُدبّر حتى في المصائب"},
+                {"t":"إغراء امرأة العزيز","refs":["يوسف:21-29"],"l":"العفة والاستعاذة بالله عند الفتنة"},
+                {"t":"السجن وتعبير الرؤى","refs":["يوسف:36-42"],"l":"الدعوة في المحن واستثمار كل موقف"},
+                {"t":"تفسير رؤيا الملك","refs":["يوسف:43-49"],"l":"العلم نعمة تُستثمر لخير الناس"},
+                {"t":"التمكين والعدل","refs":["يوسف:54-57"],"l":"الكفاءة والأمانة طريق للمكانة"},
+                {"t":"لمّ الشمل والعفو","refs":["يوسف:58-101"],"l":"العفو والتسامح مع من أساء"},
+            ]},
+        "سيدنا إبراهيم عليه السلام 🔥": {
+            "color":"#ff7043",
+            "stages":[
+                {"t":"الدعوة لأبيه وقومه","refs":["الأنعام:74-83","مريم:41-48"],"l":"الصدق مع الوالدين حتى في الدعوة"},
+                {"t":"كسر الأصنام","refs":["الأنبياء:51-67"],"l":"الشجاعة في نشر الحق ومواجهة الشرك"},
+                {"t":"النار والنجاة المعجزة","refs":["الأنبياء:68-70","العنكبوت:24"],"l":"برود النار على من اصطفاه الله"},
+                {"t":"الهجرة وبناء الكعبة","refs":["إبراهيم:35-41","البقرة:127"],"l":"إحياء شعائر الله والدعاء للذرية"},
+                {"t":"رؤيا ذبح الولد","refs":["الصافات:100-113"],"l":"الطاعة الكاملة لله والفداء العظيم"},
+            ]},
+        "سيدنا نوح عليه السلام 🚢": {
+            "color":"#64b5f6",
+            "stages":[
+                {"t":"الدعوة ألف سنة إلا خمسين","refs":["نوح:1-20","العنكبوت:14"],"l":"الصبر في الدعوة على مدى قرون"},
+                {"t":"بناء السفينة","refs":["هود:36-38","المؤمنون:27"],"l":"الطاعة المطلقة حتى في غير الأوان"},
+                {"t":"الطوفان وهلاك الكافرين","refs":["هود:40-48"],"l":"العدل الإلهي ونهاية الطغيان"},
+                {"t":"الاستواء على الجودي","refs":["هود:44"],"l":"الأمل بعد البلاء ورحمة الله"},
+            ]},
     }
 
-    selected_story = st.selectbox("اختر قصة نبي",
-                                   list(stories.keys()), key="story_select")
-
-    story = stories[selected_story]
+    story_name = st.selectbox("🗺️ اختر قصة نبي كريم", list(STORIES.keys()), key="mm_story")
+    story = STORIES[story_name]
+    col = story["color"]
 
     st.markdown(f"""
-    <div style='text-align:center;padding:25px;background:linear-gradient(135deg,#080f0a,#0d2018);border:2px solid {story["color"]};border-radius:20px;margin:15px 0'>
-        <div style='font-size:3rem'>{story["icon"]}</div>
-        <div style='color:{story["color"]};font-family:Amiri,serif;font-size:2rem;margin-top:10px'>{selected_story}</div>
-        <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.9rem;margin-top:5px'>اضغط على أي مرحلة لمعرفة التفاصيل</div>
-    </div>
-    """, unsafe_allow_html=True)
+    <div style='background:linear-gradient(135deg,#080f0a,#0d2018);border:2px solid {col};border-radius:18px;
+         padding:22px;text-align:center;margin:12px 0'>
+      <div style='color:{col};font-family:Amiri,serif;font-size:1.8rem'>{story_name}</div>
+      <div style='color:#4a7060;font-family:Cairo,sans-serif;font-size:.78rem;margin-top:6px'>
+        اضغط على أي مرحلة لعرض تفاصيلها
+      </div>
+    </div>""", unsafe_allow_html=True)
 
-    # عرض المراحل كخريطة تسلسلية
-    for i, stage_data in enumerate(story["stages"]):
-        col1, col2, col3 = st.columns([1, 6, 3])
-        with col1:
+    for idx, s in enumerate(story["stages"]):
+        with st.expander(f"{'○' if idx==0 else '●'} المرحلة {idx+1}: {s['t']}", expanded=(idx==0)):
+            refs_html = " &nbsp;|&nbsp; ".join([f"📖 {r}" for r in s["refs"]])
             st.markdown(f"""
-            <div style='text-align:center;padding:15px 0'>
-                <div style='background:{story["color"]};color:#0a1a0f;width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Amiri,serif;font-weight:700;font-size:1rem;margin:auto'>{i+1}</div>
-                <div style='width:2px;height:40px;background:linear-gradient({story["color"]},transparent);margin:5px auto'></div>
-            </div>
-            """, unsafe_allow_html=True)
-        with col2:
-            with st.expander(f"📍 {stage_data['stage']}", expanded=False):
-                surahs_text = " | ".join([f"📖 {s}" for s in stage_data['surahs']])
-                st.markdown(f"""
-                <div style='direction:rtl;padding:10px'>
-                    <div style='color:{story["color"]};font-family:Cairo,sans-serif;font-size:0.9rem;margin-bottom:8px'>{surahs_text}</div>
-                    <div style='color:#f5f0e8;font-family:Cairo,sans-serif;font-size:0.95rem'>💎 الدرس المستفاد: {stage_data["lesson"]}</div>
-                </div>
-                """, unsafe_allow_html=True)
-        with col3:
-            if st.button(f"📖 اقرأ الآيات", key=f"read_{selected_story}_{i}", use_container_width=True):
-                st.info(f"🔗 الآيات: {', '.join(stage_data['surahs'])}")
+            <div style='direction:rtl;padding:8px'>
+              <div style='color:{col};font-family:Cairo,sans-serif;font-size:.85rem;margin-bottom:8px'>{refs_html}</div>
+              <div style='color:#e8f5e9;font-family:Cairo,sans-serif;font-size:.92rem'>
+                💎 <strong>الدرس:</strong> {s["l"]}
+              </div>
+            </div>""", unsafe_allow_html=True)
+            if st.button(f"🤖 اشرح هذه المرحلة بالتفصيل", key=f"mm_ai_{idx}"):
+                with st.spinner("جارٍ الشرح…"):
+                    res = claude_ask(f"اشرح مرحلة '{s['t']}' من {story_name} شرحاً وافياً مثيراً للاهتمام مع الدروس والعبر، بأسلوب سردي جذاب. الآيات: {', '.join(s['refs'])}")
+                st.info(res)
 
-    # زر طلب تفاصيل بالذكاء الاصطناعي
-    if st.button("🤖 اشرح لي القصة بالتفصيل مع الذكاء الاصطناعي", use_container_width=True, type="primary", key="ai_story"):
-        with st.spinner("جارٍ إعداد التفسير..."):
-            prompt = f"""اشرح {selected_story} من القرآن الكريم بأسلوب تفاعلي جذاب يتضمن:
-1. مقدمة عن شخصية النبي
-2. الدروس والعبر من كل مرحلة
-3. العلاقة بحياتنا اليوم
-4. أبرز الآيات
+    st.markdown("<div class='orn'>❧</div>", unsafe_allow_html=True)
+    if st.button("🤖 اشرح لي القصة كاملة بأسلوب مؤثر", use_container_width=True, type="primary", key="mm_full"):
+        with st.spinner("جارٍ إعداد القصة…"):
+            res = claude_ask(f"""اسرد {story_name} من القرآن الكريم بأسلوب شيّق مؤثر يشمل:
+- أبرز المحطات
+- الدروس والعبر
+- الآيات الأكثر تأثيراً في هذه القصة
+- كيف نطبق هذه الدروس في حياتنا اليوم
+اكتب بأسلوب أدبي جميل بالعربية.""")
+        st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>", unsafe_allow_html=True)
 
-كن مختصراً ومشوّقاً بالعربية."""
-            try:
-                response = requests.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers={"Content-Type": "application/json"},
-                    json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                          "messages": [{"role": "user", "content": prompt}]},
-                    timeout=30
-                )
-                if response.status_code == 200:
-                    result = response.json()['content'][0]['text']
-                    st.markdown(f"""
-                    <div class='hadith-card'>
-                        <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"خطأ: {e}")
+# ══════════════════════════════════════════════════════════════
+#  ⑥ القرآن بحسب حالتي
+# ══════════════════════════════════════════════════════════════
+def pg_mood():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>💭 القرآن بحسب حالتي</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl;text-align:center;margin-bottom:16px'>أخبرني كيف تشعر الآن وسأختار لك الآيات الأنسب ✨</p>", unsafe_allow_html=True)
 
-# ==================== صفحة الحالة الوجدانية ====================
-def render_mood():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>💭 القرآن بحسب حالتي</h2>""", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style='text-align:center;padding:20px;direction:rtl'>
-        <p style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:1rem'>
-            أخبرني كيف تشعر الآن، وسأختار لك الآيات الأنسب لحالتك ✨
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # شبكة المشاعر
-    mood_emojis = {
-        "حزن وضيق": "😢", "فرح وشكر": "😊", "خوف وقلق": "😰", "توبة وندم": "🥺",
-        "تأمل وتدبر": "🤔", "قبل النوم": "🌙", "صباح جديد": "🌅", "في المصيبة": "💔",
-        "طلب الرزق": "🤲", "شفاء المريض": "🏥"
-    }
-
-    st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl;text-align:right'>كيف تشعر الآن؟</h3>""", unsafe_allow_html=True)
-
+    moods = list(MOODS.keys())
     cols = st.columns(5)
-    selected_mood = st.session_state.get('listening_mood')
-    for i, (mood, emoji) in enumerate(mood_emojis.items()):
-        with cols[i % 5]:
-            is_selected = selected_mood == mood
-            btn_color = "background:linear-gradient(135deg,#C9A84C,#a07830);color:#0a1a0f;" if is_selected else ""
-            if st.button(f"{emoji}\n{mood}", key=f"mood_{mood}", use_container_width=True):
-                st.session_state.listening_mood = mood
-                st.rerun()
+    for i,m in enumerate(moods):
+        with cols[i%5]:
+            sel_style = "border:2px solid #C9A84C;background:#1a3328;" if st.session_state.mood_sel==m else ""
+            st.markdown(f"<div class='mood-btn' style='{sel_style}'><span class='mi'>{m.split()[0]}</span><span class='ml'>{' '.join(m.split()[1:])}</span></div>", unsafe_allow_html=True)
+            if st.button("اختر", key=f"mood_sel_{i}", use_container_width=True):
+                st.session_state.mood_sel = m; st.rerun()
 
-    if st.session_state.listening_mood:
-        mood = st.session_state.listening_mood
-        emoji = mood_emojis.get(mood, "💚")
-        surahs = MOODS.get(mood, [1, 2])
-
+    if st.session_state.mood_sel:
+        mood = st.session_state.mood_sel
+        surah_list = MOODS[mood]
         st.markdown(f"""
-        <div style='background:linear-gradient(135deg,#0d2018,#162a1f);border:1px solid #C9A84C;border-radius:16px;padding:25px;margin:20px 0;text-align:center;direction:rtl'>
-            <div style='font-size:2rem'>{emoji}</div>
-            <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:1.2rem;font-weight:700;margin:10px 0'>
-                إليك آيات مخصوصة لـ "{mood}"
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        <div class='g-card' style='text-align:center;margin:16px 0'>
+          <div style='font-size:2rem'>{mood.split()[0]}</div>
+          <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:1.1rem;font-weight:700;margin-top:8px'>
+            إليك سور مختارة لـ "{' '.join(mood.split()[1:])}"
+          </div>
+        </div>""", unsafe_allow_html=True)
 
-        for surah_num in surahs:
-            surah_info = ALL_SURAHS.get(surah_num, {})
-            if surah_info:
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.markdown(f"""
-                    <div class='surah-card'>
-                        <div class='surah-info'>
-                            <h4>سورة {surah_info["name"]}</h4>
-                            <small>{surah_info["verses"]} آية • {surah_info["type"]}</small>
-                        </div>
-                        <div class='surah-number-badge'>{surah_num}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    if st.button("▶ اقرأ", key=f"mood_read_{surah_num}", use_container_width=True):
-                        st.session_state.current_surah = surah_num
-                        st.session_state.current_ayah = 1
-                        st.session_state.page = "mushaf"
-                        st.rerun()
+        for sn in surah_list:
+            si = surah_info(sn)
+            c1,c2,c3 = st.columns([4,1,1])
+            with c1:
+                st.markdown(f"""
+                <div class='sl-item'>
+                  <div>
+                    <div class='sl-name'>سورة {si["name"]}</div>
+                    <div class='sl-meta'>{si["type"]} · {si["verses"]} آية · الجزء {si["juz"]}</div>
+                  </div>
+                  <div class='sl-num'>{sn}</div>
+                </div>""", unsafe_allow_html=True)
+            with c2:
+                if st.button("📖 اقرأ", key=f"md_r_{sn}", use_container_width=True):
+                    st.session_state.cur_surah=sn; st.session_state.cur_ayah=1
+                    st.session_state.page="mushaf"; st.rerun()
+            with c3:
+                if st.button("🎙️ استمع", key=f"md_a_{sn}", use_container_width=True):
+                    st.session_state.cur_surah=sn; st.session_state.cur_ayah=1
+                    st.session_state.page="audio"; st.rerun()
 
-        # اقتراح بالذكاء الاصطناعي
-        if st.button("🤖 ابحث لي عن المزيد بالذكاء الاصطناعي", use_container_width=True, key="ai_mood"):
-            with st.spinner("جارٍ البحث..."):
-                prompt = f"""أنا أشعر بـ "{mood}". اقترح لي 5 آيات قرآنية مختارة بعناية مع:
-- نص الآية
-- اسم السورة ورقمها
-- سبب اختيارها لهذه الحالة
-- كلمة تشجيع قصيرة
+        st.markdown("<div class='orn'>❧</div>", unsafe_allow_html=True)
+        if st.button("🤖 اقترح لي آيات إضافية بالذكاء الاصطناعي", use_container_width=True, type="primary", key="mood_ai"):
+            with st.spinner("جارٍ الاختيار…"):
+                res = claude_ask(f"""أنا أشعر بـ "{' '.join(mood.split()[1:])}" الآن.
+اقترح لي 5 آيات قرآنية مختارة بعناية مع:
+- نص الآية كاملاً
+- السورة ورقم الآية
+- لماذا اخترتها لهذه الحالة تحديداً
+- كلمة دعم وتشجيع
+أجب بأسلوب دافئ وروحاني.""")
+            st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>", unsafe_allow_html=True)
 
-بالعربية وبأسلوب دافئ ومحبب."""
-                try:
-                    response = requests.post(
-                        "https://api.anthropic.com/v1/messages",
-                        headers={"Content-Type": "application/json"},
-                        json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                              "messages": [{"role": "user", "content": prompt}]},
-                        timeout=30
-                    )
-                    if response.status_code == 200:
-                        result = response.json()['content'][0]['text']
-                        st.markdown(f"""
-                        <div class='hadith-card'>
-                            <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"خطأ: {e}")
+# ══════════════════════════════════════════════════════════════
+#  ⑦ التفسير والتدبر
+# ══════════════════════════════════════════════════════════════
+def pg_tafseer():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>📚 التفسير والتدبر</h2>", unsafe_allow_html=True)
 
-# ==================== صفحة التفسير ====================
-def render_tafseer():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>📚 التفسير والتدبر</h2>""", unsafe_allow_html=True)
+    t1,t2,t3,t4 = st.tabs(["📖 التفسير الميسّر","📅 سبب النزول","🔗 المتشابهات","💎 التدبر"])
 
-    tab1, tab2, tab3, tab4 = st.tabs(["📖 التفسير الميسّر", "📅 سبب النزول", "🔗 المتشابهات اللفظية", "💎 التدبر والفوائد"])
+    with t1:
+        c1,c2 = st.columns(2)
+        with c1:
+            sel_s = st.selectbox("السورة",SURAH_NAMES,index=st.session_state.cur_surah-1,key="tf1_s")
+            sn=SURAH_NAMES.index(sel_s)+1
+        with c2:
+            an=st.number_input("الآية",1,SURAH_VERSES[sn-1],1,key="tf1_a")
+        if st.button("📖 اعرض التفسير الميسّر",use_container_width=True,type="primary",key="tf1_go"):
+            with st.spinner("جارٍ التفسير…"):
+                res=claude_ask(f"""فسّر الآية {int(an)} من سورة {sel_s} تفسيراً ميسراً شاملاً يتضمن:
+١- **المعنى الإجمالي** بأسلوب واضح مفهوم
+٢- **معاني المفردات الصعبة**
+٣- **الفوائد والدروس** المستخلصة
+٤- **وجه الإعجاز** إن وُجد
+أجب بالعربية الفصيحة المفهومة.""")
+            st.markdown(f"<div class='tj-result'><h4>📖 تفسير الآية {int(an)} من سورة {sel_s}</h4><p>{res}</p></div>",unsafe_allow_html=True)
 
-    with tab1:
-        col1, col2 = st.columns(2)
-        with col1:
-            surah_options = {v['name']: k for k, v in ALL_SURAHS.items()}
-            current_name = ALL_SURAHS.get(st.session_state.current_surah, {}).get('name', 'الفاتحة')
-            sel = st.selectbox("السورة", list(surah_options.keys()),
-                               index=list(surah_options.keys()).index(current_name) if current_name in surah_options else 0,
-                               key="tafseer_surah")
-            surah_num = surah_options[sel]
-        with col2:
-            max_a = ALL_SURAHS.get(surah_num, {}).get('verses', 1)
-            ayah_num = st.number_input("الآية", min_value=1, max_value=max_a, value=1, key="tafseer_ayah")
-
-        if st.button("📖 اعرض التفسير", use_container_width=True, type="primary", key="show_tafseer_btn"):
-            with st.spinner("جارٍ جلب التفسير..."):
-                prompt = f"""فسّر الآية {ayah_num} من سورة {sel} بشكل شامل يتضمن:
-1. 📝 التفسير الميسّر (بأسلوب واضح)
-2. 🔤 معاني المفردات الصعبة
-3. 💎 الفوائد والدروس المستفادة
-4. 🌟 وجوه الإعجاز في الآية
-
-بالعربية الفصيحة المفهومة."""
-                try:
-                    response = requests.post(
-                        "https://api.anthropic.com/v1/messages",
-                        headers={"Content-Type": "application/json"},
-                        json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                              "messages": [{"role": "user", "content": prompt}]},
-                        timeout=30
-                    )
-                    if response.status_code == 200:
-                        result = response.json()['content'][0]['text']
-                        st.markdown(f"""
-                        <div class='hadith-card'>
-                            <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:1rem;margin-bottom:15px;direction:rtl'>
-                                📖 تفسير الآية {ayah_num} من سورة {sel}
-                            </div>
-                            <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"خطأ: {e}")
-
-    with tab2:
-        st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>اكتب اسم السورة أو الموضوع للبحث عن سبب النزول:</p>""", unsafe_allow_html=True)
-        query = st.text_input("موضوع البحث", placeholder="مثال: سورة الكهف، آية الكرسي، سورة العلق...", key="revelation_query")
-        if st.button("🔍 ابحث عن سبب النزول", key="revelation_btn", use_container_width=True):
-            if query:
-                with st.spinner("جارٍ البحث..."):
-                    prompt = f"""أخبرني عن سبب نزول: {query}
-                    
+    with t2:
+        q=st.text_input("موضوع البحث",placeholder="مثال: سورة العلق، الآية الأولى، آية الكرسي…",key="tf2_q")
+        if st.button("🔍 ابحث عن سبب النزول",use_container_width=True,type="primary",key="tf2_go"):
+            if q:
+                with st.spinner("جارٍ البحث…"):
+                    res=claude_ask(f"""أذكر سبب نزول: {q}
 اذكر:
-1. سبب النزول التفصيلي
-2. الحادثة أو الموقف الذي نزلت فيه الآية
-3. الدلالة والحكمة من نزولها في هذا السياق
-4. المصدر (الصحيح من الروايات)
+- الحادثة أو الموقف الذي نزلت فيه
+- المصدر (البخاري أو مسلم أو غيرهما)
+- الحكمة من نزولها في هذا السياق
+التزم بالروايات الصحيحة فقط.""")
+                st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>",unsafe_allow_html=True)
 
-بالعربية."""
-                    try:
-                        response = requests.post(
-                            "https://api.anthropic.com/v1/messages",
-                            headers={"Content-Type": "application/json"},
-                            json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                                  "messages": [{"role": "user", "content": prompt}]},
-                            timeout=30
-                        )
-                        if response.status_code == 200:
-                            result = response.json()['content'][0]['text']
-                            st.markdown(f"""
-                            <div class='hadith-card'>
-                                <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error(f"خطأ: {e}")
-
-    with tab3:
-        st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>ابحث عن الآيات المتشابهة لفظياً:</p>""", unsafe_allow_html=True)
-        search_word = st.text_input("كلمة أو عبارة", placeholder="مثال: الصبر، الرزق، التوكل...", key="similar_query")
-        if st.button("🔗 ابحث عن المتشابهات", key="similar_btn", use_container_width=True):
-            if search_word:
-                with st.spinner("جارٍ البحث..."):
-                    prompt = f"""ابحث في القرآن الكريم عن الآيات التي تتشابه في ذكر "{search_word}".
-
+    with t3:
+        w=st.text_input("كلمة أو عبارة قرآنية",placeholder="مثال: الصبر، الرحمة، التوكل…",key="tf3_w")
+        if st.button("🔗 ابحث عن المتشابهات اللفظية",use_container_width=True,type="primary",key="tf3_go"):
+            if w:
+                with st.spinner("جارٍ البحث…"):
+                    res=claude_ask(f"""ابحث في القرآن الكريم عن الآيات المتشابهة في ذكر "{w}".
 اذكر:
-1. الآيات التي تذكر هذه الكلمة أو المعنى
-2. السياق المختلف لكل آية
-3. الفروق الدقيقة بين الآيات المتشابهة
-4. الحكمة من تكرارها
+- الآيات بنصها مع السورة والرقم
+- السياق المختلف لكل آية
+- الفروق الدقيقة بين الاستخدامات
+- الحكمة من التكرار""")
+                st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>",unsafe_allow_html=True)
 
-بالعربية مع ذكر اسم السورة ورقم الآية."""
-                    try:
-                        response = requests.post(
-                            "https://api.anthropic.com/v1/messages",
-                            headers={"Content-Type": "application/json"},
-                            json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                                  "messages": [{"role": "user", "content": prompt}]},
-                            timeout=30
-                        )
-                        if response.status_code == 200:
-                            result = response.json()['content'][0]['text']
-                            st.markdown(f"""
-                            <div class='hadith-card'>
-                                <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error(f"خطأ: {e}")
-
-    with tab4:
-        st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>اكتب موضوعاً أو آية وسيعطيك الذكاء الاصطناعي تدبراً عميقاً:</p>""", unsafe_allow_html=True)
-        tadabbur_query = st.text_area("موضوع التدبر أو الآية", placeholder="مثال: ﴿وَعَسَى أَن تَكْرَهُوا شَيْئاً وَهُوَ خَيْرٌ لَّكُمْ﴾", height=100, key="tadabbur_q")
-        if st.button("💎 تدبّر معي", key="tadabbur_btn", use_container_width=True, type="primary"):
-            if tadabbur_query:
-                with st.spinner("جارٍ التدبر..."):
-                    prompt = f"""تدبّر معي هذه الآية أو الموضوع القرآني: {tadabbur_query}
-
+    with t4:
+        q=st.text_area("آية أو موضوع للتدبر",placeholder="مثال: ﴿وَعَسَى أَن تَكْرَهُوا شَيْئاً وَهُوَ خَيْرٌ لَّكُمْ﴾",height=90,key="tf4_q")
+        if st.button("💎 تدبّر معي",use_container_width=True,type="primary",key="tf4_go"):
+            if q:
+                with st.spinner("جارٍ التدبر…"):
+                    res=claude_ask(f"""تدبّر هذه الآية أو الموضوع: {q}
 قدّم:
-1. 🌊 فيض التدبر (أعمق ما في الآية)
-2. 💡 كيف تطبّق هذه الآية في حياتك اليومية
-3. 🔭 النظرة الكونية التي تفتحها
-4. ❓ سؤال للتفكير والتأمل
+١- أعمق ما في الآية من معانٍ
+٢- كيف تطبّقها في حياتك اليومية تطبيقاً عملياً
+٣- النظرة الكونية التي تفتحها على الوجود
+٤- سؤال للتأمل والتفكر
+أجب بأسلوب روحاني مؤثر يلمس القلب.""")
+                st.markdown(f"<div class='tj-result'><h4>💎 التدبر</h4><p>{res}</p></div>",unsafe_allow_html=True)
 
-بأسلوب روحاني مؤثر يلمس القلب."""
-                    try:
-                        response = requests.post(
-                            "https://api.anthropic.com/v1/messages",
-                            headers={"Content-Type": "application/json"},
-                            json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                                  "messages": [{"role": "user", "content": prompt}]},
-                            timeout=30
-                        )
-                        if response.status_code == 200:
-                            result = response.json()['content'][0]['text']
-                            st.markdown(f"""
-                            <div class='dhikr-card'>
-                                <div class='hadith-text' style='font-size:1rem;color:#e8f5e9;text-align:right'>{result}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error(f"خطأ: {e}")
+# ══════════════════════════════════════════════════════════════
+#  ⑧ البحث القرآني
+# ══════════════════════════════════════════════════════════════
+def pg_search():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🔍 البحث القرآني الذكي</h2>", unsafe_allow_html=True)
+    st.markdown("<div class='info-box'>💡 ابحث بالمعنى والموضوع، لا تحتاج لمعرفة النص الحرفي</div>", unsafe_allow_html=True)
 
-# ==================== البحث بالمقاصد ====================
-def render_search():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🔍 البحث بالمقاصد والمعاني</h2>""", unsafe_allow_html=True)
+    q=st.text_input("ابحث بأي كلمة أو معنى",placeholder="مثال: آيات عن الصبر في البلاء، الأمل بعد اليأس…",key="s_q")
+    c1,c2=st.columns(2)
+    with c1:
+        stype=st.selectbox("نوع البحث",["بحث معنوي (بالمقاصد)","بحث بالكلمة","بحث موضوعي"],key="s_type")
+    with c2:
+        n_res=st.slider("عدد النتائج",3,12,5,key="s_n")
 
-    st.markdown("""
-    <div class='notification'>
-        💡 <strong>البحث الذكي:</strong> لا تحتاج لمعرفة النص الحرفي. ابحث بالمعنى مثلاً: "آيات عن الصبر في الشدة" أو "آيات الرزق والعمل"
-    </div>
-    """, unsafe_allow_html=True)
-
-    search_query = st.text_input("ابحث بأي كلمة أو معنى أو موضوع",
-                                  placeholder="مثال: التوكل على الله، بر الوالدين، الصدق في المعاملة...",
-                                  key="main_search")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        search_type = st.selectbox("نوع البحث", ["بحث معنوي (بالمقاصد)", "بحث نصي (بالكلمة)", "بحث موضوعي"], key="search_type")
-    with col2:
-        result_count = st.slider("عدد النتائج", 3, 15, 5, key="result_count")
-
-    if st.button("🔍 ابحث", use_container_width=True, type="primary", key="do_search"):
-        if search_query:
-            with st.spinner("جارٍ البحث في القرآن الكريم..."):
-                prompt = f"""أنت محرك بحث قرآني ذكي. ابحث في القرآن الكريم عن: "{search_query}"
-نوع البحث: {search_type}
-
-أعطِ {result_count} آيات مناسبة مع:
+    if st.button("🔍 ابحث الآن",use_container_width=True,type="primary",key="s_go"):
+        if q:
+            with st.spinner("جارٍ البحث في القرآن الكريم…"):
+                res=claude_ask(f"""أنت محرك بحث قرآني ذكي. ابحث عن: "{q}" ({stype})
+أعطِ {n_res} آيات مع:
 - نص الآية كاملاً بالتشكيل
-- اسم السورة ورقم الآية
-- شرح مختصر لعلاقتها بالبحث
-- سياق الآية
+- اسم السورة ورقم الآية بين قوسين مربعين
+- شرح موجز لعلاقتها بالبحث
+رتّبها من الأكثر صلة للأقل.""")
+            st.markdown(f"<div class='hadith-card'><div style='color:#C9A84C;font-family:Cairo,sans-serif;margin-bottom:12px;direction:rtl'>نتائج البحث عن: {q}</div><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>",unsafe_allow_html=True)
 
-رتّبها من الأكثر صلة للأقل."""
-                try:
-                    response = requests.post(
-                        "https://api.anthropic.com/v1/messages",
-                        headers={"Content-Type": "application/json"},
-                        json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                              "messages": [{"role": "user", "content": prompt}]},
-                        timeout=30
-                    )
-                    if response.status_code == 200:
-                        result = response.json()['content'][0]['text']
-                        st.markdown(f"""
-                        <div class='hadith-card'>
-                            <div style='color:#C9A84C;font-family:Cairo,sans-serif;margin-bottom:15px;direction:rtl'>
-                                🔍 نتائج البحث عن: {search_query}
-                            </div>
-                            <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"خطأ: {e}")
+    st.markdown("<div class='orn'>❧</div>",unsafe_allow_html=True)
+    st.markdown("<p style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>🚀 بحث سريع:</p>",unsafe_allow_html=True)
+    quick=["آيات الصبر والثبات","فضل العلم والتعلم","بر الوالدين","التوبة والمغفرة","الرزق والبركة","الأمل والتفاؤل","العدل والقسط","الرحمة بالخلق"]
+    cols=st.columns(4)
+    for i,qk in enumerate(quick):
+        with cols[i%4]:
+            if st.button(qk,key=f"qk_{i}",use_container_width=True):
+                with st.spinner("جارٍ البحث…"):
+                    res=claude_ask(f"ابحث في القرآن عن أبرز 4 آيات تتعلق بـ '{qk}' مع النص والسورة والفائدة.")
+                st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.95rem'>{res}</div></div>",unsafe_allow_html=True)
 
-    # بحث سريع
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
-    st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>🚀 بحث سريع</h3>""", unsafe_allow_html=True)
-    quick_searches = ["آيات الصبر", "فضل العلم", "بر الوالدين", "التوبة والمغفرة", "رزق الله الواسع", "الأمل والتفاؤل", "أسماء الله الحسنى", "يوم القيامة"]
-    cols = st.columns(4)
-    for i, qs in enumerate(quick_searches):
-        with cols[i % 4]:
-            if st.button(qs, key=f"qs_{i}", use_container_width=True):
-                st.session_state['quick_search'] = qs
-                st.rerun()
+# ══════════════════════════════════════════════════════════════
+#  ⑨ المساعد الذكي
+# ══════════════════════════════════════════════════════════════
+def pg_ai():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🤖 المساعد القرآني الذكي</h2>", unsafe_allow_html=True)
+    st.markdown("<div class='info-box'>🌟 اسألني أي شيء: تفسير، تجويد، أحكام شرعية، قصص أنبياء، حكمة، دعاء…</div>",unsafe_allow_html=True)
 
-# ==================== المساعد الذكي ====================
-def render_ai_assistant():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🤖 المساعد القرآني الذكي</h2>""", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class='notification'>
-        🌟 <strong>اسألني أي شيء:</strong> تفسير، تجويد، أسئلة دينية، معلومات قرآنية، أحكام شرعية، قصص الأنبياء، وأكثر...
-    </div>
-    """, unsafe_allow_html=True)
-
-    # عرض تاريخ المحادثة
-    for msg in st.session_state.chat_history:
-        if msg['role'] == 'user':
-            st.markdown(f"""
-            <div style='display:flex;justify-content:flex-end;margin:10px 0'>
-                <div class='user-message'>
-                    <div class='message-text'>{msg['content']}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    # عرض المحادثة
+    for msg in st.session_state.chat:
+        if msg["role"]=="user":
+            st.markdown(f"<div class='chat-u'><div class='chat-lbl'>أنت</div><div class='chat-txt'>{msg['content']}</div></div>",unsafe_allow_html=True)
         else:
-            st.markdown(f"""
-            <div style='display:flex;justify-content:flex-start;margin:10px 0'>
-                <div class='ai-message'>
-                    <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:0.8rem;margin-bottom:5px'>🤖 المساعد القرآني</div>
-                    <div class='message-text'>{msg['content']}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"<div class='chat-a'><div class='chat-lbl'>🤖 المساعد القرآني</div><div class='chat-txt'>{msg['content']}</div></div>",unsafe_allow_html=True)
 
-    # اقتراحات أسئلة
-    if not st.session_state.chat_history:
-        st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl;margin-top:20px'>💡 أسئلة مقترحة:</h3>""", unsafe_allow_html=True)
-        suggestions = [
-            "ما هي أفضل آيات للقراءة قبل النوم؟",
-            "اشرح لي أركان الصلاة",
-            "ما الفرق بين الجزء والحزب والربع؟",
-            "كيف أحفظ القرآن بسرعة؟",
-            "ما معنى البسملة؟",
-            "اذكر لي أسماء الله الحسنى مع معانيها",
-        ]
-        cols = st.columns(2)
-        for i, sug in enumerate(suggestions):
-            with cols[i % 2]:
-                if st.button(sug, key=f"sug_{i}", use_container_width=True):
-                    st.session_state.chat_history.append({"role": "user", "content": sug})
-                    with st.spinner("جارٍ التفكير..."):
-                        try:
-                            response = requests.post(
-                                "https://api.anthropic.com/v1/messages",
-                                headers={"Content-Type": "application/json"},
-                                json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                                      "system": "أنت مساعد قرآني إسلامي متخصص. أجب باللغة العربية الفصيحة المفهومة. قدّم إجابات دقيقة ومفيدة تستند للقرآن الكريم والسنة النبوية الصحيحة.",
-                                      "messages": st.session_state.chat_history},
-                                timeout=30
-                            )
-                            if response.status_code == 200:
-                                reply = response.json()['content'][0]['text']
-                                st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                                st.rerun()
-                        except Exception as e:
-                            st.error(f"خطأ: {e}")
-
-    # مربع الإدخال
-    col1, col2 = st.columns([5, 1])
-    with col1:
-        user_input = st.text_input("اكتب سؤالك هنا...", placeholder="أي سؤال عن القرآن أو الإسلام...", key="ai_input")
-    with col2:
-        send_btn = st.button("إرسال ✉️", key="send_ai", use_container_width=True, type="primary")
-
-    if send_btn and user_input:
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        with st.spinner("🤖 جارٍ التفكير..."):
-            try:
-                messages_to_send = st.session_state.chat_history[-10:]  # آخر 10 رسائل
-                response = requests.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers={"Content-Type": "application/json"},
-                    json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                          "system": "أنت مساعد قرآني إسلامي متخصص ذو علم واسع. أجب باللغة العربية الفصيحة المفهومة. قدّم إجابات دقيقة ومفيدة تستند للقرآن الكريم والسنة النبوية الصحيحة. كن ودوداً ومشجعاً.",
-                          "messages": messages_to_send},
-                    timeout=30
-                )
-                if response.status_code == 200:
-                    reply = response.json()['content'][0]['text']
-                    st.session_state.chat_history.append({"role": "assistant", "content": reply})
-                    st.rerun()
-            except Exception as e:
-                st.error(f"خطأ: {e}")
-
-    if st.session_state.chat_history:
-        if st.button("🗑️ مسح المحادثة", key="clear_chat"):
-            st.session_state.chat_history = []
-            st.rerun()
-
-# ==================== مكتبة القلب ====================
-def render_heart():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>❤️ مكتبة القلب</h2>""", unsafe_allow_html=True)
-
-    if not st.session_state.heart_library:
-        st.markdown("""
-        <div style='text-align:center;padding:60px 20px;direction:rtl'>
-            <div style='font-size:4rem'>❤️</div>
-            <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:1rem;margin-top:15px'>
-                مكتبة القلب فارغة<br>
-                أضف الآيات التي تؤثر فيك من المصحف أو مشغل الصوت
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown(f"""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>{len(st.session_state.heart_library)} آية في مكتبة قلبك</p>""", unsafe_allow_html=True)
-
-        for i, item in enumerate(st.session_state.heart_library):
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                mood_text = f"<div style='display:inline-block;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:20px;padding:3px 12px;color:#C9A84C;font-family:Cairo,sans-serif;font-size:0.8rem;margin-top:8px'>{item.get('mood','')}</div>" if item.get('mood') else ""
-                st.markdown(f"""
-                <div class='ayah-container'>
-                    <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:0.85rem;margin-bottom:8px'>
-                        📖 سورة {item.get("surah_name","")} — الآية {item.get("ayah","")}
-                    </div>
-                    <div style='color:#f5f0e8;font-family:Amiri,serif;font-size:1.5rem;direction:rtl;line-height:2'>
-                        {item.get("text","الآية")}
-                    </div>
-                    {mood_text}
-                    <div style='color:#4a7a5a;font-family:Cairo,sans-serif;font-size:0.75rem;margin-top:8px'>{item.get("time","")}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with col2:
-                if st.button("🗑️", key=f"del_heart_{i}", help="حذف"):
-                    st.session_state.heart_library.pop(i)
-                    st.rerun()
-                audio_url = get_audio_url(item.get("surah",1), item.get("ayah",1))
-                st.markdown(f"""<audio controls style='width:100%;margin-top:5px'><source src='{audio_url}' type='audio/mpeg'></audio>""", unsafe_allow_html=True)
-
-# ==================== الإشارات المرجعية ====================
-def render_bookmarks():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🔖 الإشارات المرجعية</h2>""", unsafe_allow_html=True)
-
-    if not st.session_state.bookmarks:
-        st.markdown("""
-        <div style='text-align:center;padding:60px;direction:rtl'>
-            <div style='font-size:3rem'>🔖</div>
-            <div style='color:#a5d6a7;font-family:Cairo,sans-serif;margin-top:15px'>لا توجد إشارات مرجعية بعد. أضفها أثناء القراءة!</div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        for i, bm in enumerate(st.session_state.bookmarks):
-            col1, col2, col3 = st.columns([4, 2, 1])
-            with col1:
-                st.markdown(f"""
-                <div class='surah-card'>
-                    <div class='surah-info'>
-                        <h4>سورة {bm.get("surah_name","")} — الآية {bm.get("ayah","")}</h4>
-                        <small>⏰ {bm.get("time","")}</small>
-                    </div>
-                    <div class='surah-number-badge'>{bm.get("surah","")}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with col2:
-                if st.button("📖 اذهب للآية", key=f"goto_bm_{i}", use_container_width=True):
-                    st.session_state.current_surah = bm.get("surah", 1)
-                    st.session_state.current_ayah = bm.get("ayah", 1)
-                    st.session_state.page = "mushaf"
-                    st.rerun()
-            with col3:
-                if st.button("🗑️", key=f"del_bm_{i}", help="حذف"):
-                    st.session_state.bookmarks.pop(i)
+    if not st.session_state.chat:
+        st.markdown("<p style='color:#4a7060;font-family:Cairo,sans-serif;direction:rtl;margin-top:16px'>💡 أسئلة مقترحة:</p>",unsafe_allow_html=True)
+        sugs=["ما أفضل آيات للقراءة قبل النوم؟","اشرح لي سورة الفاتحة كاملاً","ما معنى حروف المقطعة في القرآن؟","أنواع المد في التجويد","كيف أحفظ القرآن بسرعة؟","ما أكثر سورة مكررة في القرآن؟"]
+        cols=st.columns(2)
+        for i,s in enumerate(sugs):
+            with cols[i%2]:
+                if st.button(s,key=f"sug_{i}",use_container_width=True):
+                    st.session_state.chat.append({"role":"user","content":s})
+                    with st.spinner("🤖 جارٍ التفكير…"):
+                        rep=claude_ask(s,history=st.session_state.chat[:-1])
+                    st.session_state.chat.append({"role":"assistant","content":rep})
                     st.rerun()
 
-# ==================== الختمة ====================
-def render_khatma():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>📿 الختمة القرآنية</h2>""", unsafe_allow_html=True)
+    c1,c2=st.columns([5,1])
+    with c1:
+        inp=st.text_input("اكتب سؤالك…",placeholder="أي سؤال قرآني أو ديني…",key="ai_inp",label_visibility="collapsed")
+    with c2:
+        send=st.button("إرسال ✉️",key="ai_send",use_container_width=True,type="primary")
 
-    completed = sum(st.session_state.khatma_progress)
-    percentage = (completed / 114) * 100
-
-    st.markdown(f"""
-    <div style='background:linear-gradient(135deg,#0d2018,#162a1f);border:1px solid #C9A84C;border-radius:16px;padding:25px;text-align:center;margin-bottom:20px'>
-        <div style='color:#C9A84C;font-family:Amiri,serif;font-size:3rem;font-weight:700'>{completed}/114</div>
-        <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.9rem;margin:8px 0'>سورة أتممت قراءتها</div>
-        <div class='progress-bar' style='margin:15px 0'>
-            <div class='progress-fill' style='width:{percentage:.1f}%'></div>
-        </div>
-        <div style='color:#C9A84C;font-family:Cairo,sans-serif'>{percentage:.1f}% من الختمة</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>اضغط على السورة لتحديد حالتها:</h3>""", unsafe_allow_html=True)
-
-    # شبكة السور
-    cols_per_row = 6
-    surah_list = list(ALL_SURAHS.items())
-
-    for row_start in range(0, 114, cols_per_row):
-        cols = st.columns(cols_per_row)
-        for j in range(cols_per_row):
-            idx = row_start + j
-            if idx < 114:
-                surah_num, surah_info = surah_list[idx] if idx < len(surah_list) else (idx+1, {"name": f"سورة {idx+1}"})
-                with cols[j]:
-                    is_done = st.session_state.khatma_progress[idx] if idx < len(st.session_state.khatma_progress) else False
-                    btn_text = f"✅ {surah_info['name']}" if is_done else surah_info['name']
-                    btn_type = "primary" if is_done else "secondary"
-                    if st.button(btn_text, key=f"khatma_{idx}", use_container_width=True,
-                                  help=f"سورة {surah_info['name']} - {surah_info.get('verses','?')} آية"):
-                        st.session_state.khatma_progress[idx] = not st.session_state.khatma_progress[idx]
-                        st.rerun()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ علّم الكل كمكتمل", use_container_width=True, key="mark_all"):
-            st.session_state.khatma_progress = [True] * 114
-            st.rerun()
-    with col2:
-        if st.button("🔄 إعادة ضبط الختمة", use_container_width=True, key="reset_khatma"):
-            st.session_state.khatma_progress = [False] * 114
-            st.rerun()
-
-# ==================== الأذكار ====================
-def render_dhikr():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🌙 الأذكار والأدعية</h2>""", unsafe_allow_html=True)
-
-    tab1, tab2, tab3 = st.tabs(["🌅 أذكار الصباح", "🌙 أذكار المساء", "💤 أذكار النوم"])
-
-    morning_dhikr = [
-        {"text": "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", "count": 1, "benefit": "ذكر الصباح الجامع"},
-        {"text": "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ", "count": 1, "benefit": "تفويض الأمر لله"},
-        {"text": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", "count": 100, "benefit": "تُمحى به الخطايا وإن كانت مثل زبد البحر"},
-        {"text": "لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", "count": 10, "benefit": "كمن أعتق 4 أنفس من ولد إسماعيل"},
-        {"text": "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ", "count": 1, "benefit": "سيد الاستغفار - من قاله موقناً ومات من يومه دخل الجنة"},
-        {"text": "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ — آيَةُ الْكُرْسِيِّ", "count": 1, "benefit": "من قالها عند الصباح لم يزل في حفظ الله حتى يمسي"},
-    ]
-
-    evening_dhikr = [
-        {"text": "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ", "count": 1, "benefit": "ذكر المساء الجامع"},
-        {"text": "اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَٰهَ إِلَّا أَنْتَ وَأَنَّ مُحَمَّداً عَبْدُكَ وَرَسُولُكَ", "count": 4, "benefit": "أعتق الله ربعه من النار"},
-        {"text": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ", "count": 3, "benefit": "أفضل التسبيح"},
-        {"text": "اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَٰهَ إِلَّا أَنْتَ", "count": 3, "benefit": "دعاء العافية في الجسد"},
-    ]
-
-    sleep_dhikr = [
-        {"text": "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا", "count": 1, "benefit": "ذكر النوم"},
-        {"text": "اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ", "count": 3, "benefit": "الحفظ من عذاب يوم القيامة"},
-        {"text": "سُبْحَانَ اللَّهِ — الحمد لله — الله أكبر", "count": 33, "benefit": "خير من خادم - قاله النبي لفاطمة"},
-        {"text": "آيَةُ الْكُرْسِيِّ", "count": 1, "benefit": "حفظ الله ليله ولا يقربه شيطان حتى يصبح"},
-        {"text": "قُلْ هُوَ اللَّهُ أَحَدٌ — الفلق — الناس", "count": 3, "benefit": "كفته من كل شيء"},
-    ]
-
-    dhikr_tabs = {"🌅 أذكار الصباح": morning_dhikr, "🌙 أذكار المساء": evening_dhikr, "💤 أذكار النوم": sleep_dhikr}
-
-    for tab, dhikr_list in zip([tab1, tab2, tab3], dhikr_tabs.values()):
-        with tab:
-            for j, dhikr in enumerate(dhikr_list):
-                count_key = f"dhikr_count_{tab}_{j}"
-                current_count = st.session_state.daily_dhikr_count.get(count_key, 0)
-
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.markdown(f"""
-                    <div class='dhikr-card'>
-                        <div class='dhikr-text'>{dhikr["text"]}</div>
-                        <div style='margin:10px 0'>
-                            <span class='dhikr-count'>× {dhikr["count"]}</span>
-                            <span style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.8rem;margin-right:10px'>{dhikr["benefit"]}</span>
-                        </div>
-                        <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:0.9rem;margin-top:5px'>
-                            العدد: {current_count} / {dhikr["count"]}
-                        </div>
-                        <div class='progress-bar'>
-                            <div class='progress-fill' style='width:{min(current_count/dhikr["count"]*100,100):.0f}%'></div>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    if st.button("سبّح ✋", key=f"dhikr_{tab}_{j}", use_container_width=True, type="primary"):
-                        if current_count < dhikr["count"]:
-                            st.session_state.daily_dhikr_count[count_key] = current_count + 1
-                        else:
-                            st.session_state.daily_dhikr_count[count_key] = 0
-                        st.rerun()
-
-# ==================== أوقات الصلاة ====================
-def render_prayer():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🕌 أوقات الصلاة</h2>""", unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        lat = st.number_input("خط العرض", value=30.06, format="%.4f", key="lat_input")
-    with col2:
-        lon = st.number_input("خط الطول", value=31.24, format="%.4f", key="lon_input")
-    with col3:
-        method = st.selectbox("طريقة الحساب", [
-            (4, "أم القرى - مكة المكرمة"),
-            (5, "الاتحاد الإسلامي في أمريكا الشمالية"),
-            (2, "رابطة العالم الإسلامي"),
-            (1, "الهيئة المصرية العامة"),
-        ], format_func=lambda x: x[1], key="method_select")
-
-    if st.button("🔄 جلب أوقات الصلاة", use_container_width=True, type="primary", key="get_prayer"):
-        with st.spinner("جارٍ جلب أوقات الصلاة..."):
-            timings = get_prayer_times(lat, lon, method[0] if method else 5)
-            if timings:
-                prayers = [
-                    ("الفجر", timings.get("Fajr", ""), "🌙"),
-                    ("الشروق", timings.get("Sunrise", ""), "🌅"),
-                    ("الظهر", timings.get("Dhuhr", ""), "☀️"),
-                    ("العصر", timings.get("Asr", ""), "🌤"),
-                    ("المغرب", timings.get("Maghrib", ""), "🌇"),
-                    ("العشاء", timings.get("Isha", ""), "🌙"),
-                ]
-
-                now = datetime.now().strftime("%H:%M")
-
-                for name, time_str, icon in prayers:
-                    is_next = False
-                    st.markdown(f"""
-                    <div class='prayer-time-card {"active" if is_next else ""}'>
-                        <div style='display:flex;align-items:center;gap:10px'>
-                            <span style='font-size:1.3rem'>{icon}</span>
-                            <span class='prayer-name {"active" if is_next else ""}'>{name}</span>
-                        </div>
-                        <span class='prayer-time'>{time_str}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                st.markdown(f"""
-                <div style='text-align:center;margin-top:20px;color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.85rem;direction:rtl'>
-                    📅 التاريخ: {datetime.now().strftime("%Y-%m-%d")} | ⏰ الوقت الحالي: {now}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.error("⚠️ تعذّر جلب أوقات الصلاة. تأكد من الإنترنت.")
-
-# ==================== القبلة ====================
-def render_qibla():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>🧭 اتجاه القبلة</h2>""", unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        lat = st.number_input("خط العرض", value=30.06, format="%.4f", key="qibla_lat")
-    with col2:
-        lon = st.number_input("خط الطول", value=31.24, format="%.4f", key="qibla_lon")
-
-    if st.button("🧭 احسب اتجاه القبلة", use_container_width=True, type="primary", key="get_qibla"):
-        with st.spinner("جارٍ الحساب..."):
-            direction = get_qibla(lat, lon)
-            if direction:
-                st.markdown(f"""
-                <div style='text-align:center;padding:40px;background:linear-gradient(135deg,#0d2018,#162a1f);border:2px solid #C9A84C;border-radius:20px;margin:20px 0'>
-                    <div style='font-size:5rem;transform:rotate({direction}deg);display:inline-block;transition:transform 1s'>🧭</div>
-                    <div style='color:#C9A84C;font-family:Amiri,serif;font-size:2rem;margin-top:15px'>اتجاه القبلة</div>
-                    <div style='color:#f5f0e8;font-family:Cairo,sans-serif;font-size:1.5rem;margin:10px 0'>{direction:.2f}°</div>
-                    <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.9rem'>من الشمال باتجاه عقارب الساعة</div>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.error("⚠️ تعذّر حساب اتجاه القبلة")
-
-# ==================== الأحاديث ====================
-def render_hadith():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>📜 الأحاديث النبوية الصحيحة</h2>""", unsafe_allow_html=True)
-
-    tab1, tab2 = st.tabs(["🔍 ابحث عن حديث", "📚 أحاديث مختارة"])
-
-    with tab1:
-        search_term = st.text_input("ابحث عن حديث", placeholder="مثال: حديث عن الصدق، البر والرحم، طلب العلم...", key="hadith_search")
-        if st.button("🔍 ابحث", use_container_width=True, type="primary", key="do_hadith_search"):
-            if search_term:
-                with st.spinner("جارٍ البحث..."):
-                    prompt = f"""ابحث عن الأحاديث النبوية الصحيحة المتعلقة بـ: "{search_term}"
-
-أعطِ 3-5 أحاديث فقط مؤكدة من صحيح البخاري أو مسلم أو سنن الترمذي أو غيرها من كتب الحديث الموثوقة، مع:
-- نص الحديث كاملاً
-- الراوي والمصدر (مثل: رواه البخاري برقم ...)
-- درجة صحته
-- الفائدة المستخلصة
-
-لا تذكر أحاديث ضعيفة أو موضوعة."""
-                    try:
-                        response = requests.post(
-                            "https://api.anthropic.com/v1/messages",
-                            headers={"Content-Type": "application/json"},
-                            json={"model": "claude-sonnet-4-6", "max_tokens": 1000,
-                                  "messages": [{"role": "user", "content": prompt}]},
-                            timeout=30
-                        )
-                        if response.status_code == 200:
-                            result = response.json()['content'][0]['text']
-                            st.markdown(f"""
-                            <div class='hadith-card'>
-                                <div class='hadith-text' style='font-size:1rem;color:#e8f5e9'>{result}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error(f"خطأ: {e}")
-
-    with tab2:
-        # أحاديث ثابتة من صحيح البخاري ومسلم
-        hadiths = [
-            {"text": "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى", "source": "صحيح البخاري — رقم 1 | عن عمر بن الخطاب رضي الله عنه"},
-            {"text": "الدِّينُ النَّصِيحَةُ. قُلْنَا: لِمَنْ؟ قَالَ: لِلَّهِ وَلِكِتَابِهِ وَلِرَسُولِهِ وَلِأَئِمَّةِ الْمُسْلِمِينَ وَعَامَّتِهِمْ", "source": "صحيح مسلم — رقم 55 | عن تميم الداري رضي الله عنه"},
-            {"text": "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ", "source": "صحيح البخاري — رقم 6136 | عن أبي هريرة رضي الله عنه"},
-            {"text": "لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ", "source": "صحيح البخاري — رقم 13 | عن أنس بن مالك رضي الله عنه"},
-            {"text": "مَنْ سَلَكَ طَرِيقًا يَطْلُبُ فِيهِ عِلْمًا سَلَكَ اللَّهُ بِهِ طَرِيقًا مِنْ طُرُقِ الْجَنَّةِ", "source": "صحيح مسلم — رقم 2699 | عن أبي هريرة رضي الله عنه"},
-            {"text": "اتَّقِ اللَّهِ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا، وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ", "source": "سنن الترمذي — رقم 1987 | عن أبي ذر رضي الله عنه"},
-        ]
-
-        for h in hadiths:
-            st.markdown(f"""
-            <div class='hadith-card'>
-                <div class='hadith-text'>{h["text"]}</div>
-                <div class='hadith-source'>📚 {h["source"]}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-# ==================== الإعدادات ====================
-def render_settings():
-    st.markdown("""<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl;text-align:right'>⚙️ الإعدادات</h2>""", unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>📖 إعدادات المصحف</h3>""", unsafe_allow_html=True)
-
-        font_size = st.slider("حجم الخط", 1.2, 3.5, st.session_state.font_size, 0.1, key="settings_font")
-        st.session_state.font_size = font_size
-
-        st.session_state.show_translation = st.toggle("إظهار الترجمة", value=st.session_state.show_translation, key="toggle_trans")
-
-        sheikh_names = list(SHEIKHS.values())
-        sheikh_keys = list(SHEIKHS.keys())
-        current_idx = sheikh_keys.index(st.session_state.selected_sheikh) if st.session_state.selected_sheikh in sheikh_keys else 0
-        selected_name = st.selectbox("الشيخ الافتراضي للتلاوة", sheikh_names, index=current_idx, key="default_sheikh")
-        st.session_state.selected_sheikh = sheikh_keys[sheikh_names.index(selected_name)]
-
-    with col2:
-        st.markdown("""<h3 style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl'>🎨 إعدادات المظهر</h3>""", unsafe_allow_html=True)
-
-        st.session_state.focus_mode = st.toggle("وضع التركيز الافتراضي", value=st.session_state.focus_mode, key="toggle_focus")
-
-        st.markdown("""<p style='color:#a5d6a7;font-family:Cairo,sans-serif;direction:rtl;font-size:0.9rem;margin-top:20px'>
-        🌟 عرض معلومات التطبيق:
-        </p>""", unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class='ayah-container' style='margin-top:10px'>
-            <div style='color:#C9A84C;font-family:Amiri,serif;font-size:1.2rem;margin-bottom:10px'>مصحف هاشم الذكي</div>
-            <div style='color:#a5d6a7;font-family:Cairo,sans-serif;font-size:0.85rem;line-height:2;direction:rtl'>
-                ✅ الاستماع بصوت 8 مشايخ<br>
-                ✅ تصحيح التلاوة بالذكاء الاصطناعي<br>
-                ✅ خريطة القصص القرآنية<br>
-                ✅ القرآن بحسب الحالة الوجدانية<br>
-                ✅ التفسير والتدبر<br>
-                ✅ البحث بالمقاصد<br>
-                ✅ مكتبة القلب<br>
-                ✅ الختمة التفاعلية<br>
-                ✅ الأذكار مع العداد<br>
-                ✅ أوقات الصلاة والقبلة<br>
-                ✅ الأحاديث الصحيحة<br>
-                ✅ المساعد القرآني الذكي
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # إعادة ضبط
-    st.markdown("<div class='islamic-divider'>❧</div>", unsafe_allow_html=True)
-    if st.button("🔄 إعادة ضبط جميع البيانات", use_container_width=True, key="reset_all"):
-        for key in list(st.session_state.keys()):
-            if key not in ['page']:
-                del st.session_state[key]
-        st.success("✅ تم إعادة ضبط جميع البيانات")
+    if send and inp.strip():
+        st.session_state.chat.append({"role":"user","content":inp.strip()})
+        with st.spinner("🤖 جارٍ التفكير…"):
+            rep=claude_ask(inp.strip(),
+                           system="أنت مساعد قرآني إسلامي عالم ذو علم واسع. أجب بالعربية الفصيحة المفهومة. كن دقيقاً ودافئاً ومشجعاً.",
+                           history=st.session_state.chat[:-1])
+        st.session_state.chat.append({"role":"assistant","content":rep})
         st.rerun()
 
-# ==================== التشغيل الرئيسي ====================
-render_sidebar()
+    if st.session_state.chat:
+        if st.button("🗑️ مسح المحادثة",key="ai_clear"):
+            st.session_state.chat=[];st.rerun()
 
-page = st.session_state.page
-if page == 'home':
-    render_home()
-elif page == 'mushaf':
-    render_mushaf()
-elif page == 'audio':
-    render_audio()
-elif page == 'tajweed':
-    render_tajweed()
-elif page == 'mindmap':
-    render_mindmap()
-elif page == 'mood':
-    render_mood()
-elif page == 'tafseer':
-    render_tafseer()
-elif page == 'search':
-    render_search()
-elif page == 'ai_assistant':
-    render_ai_assistant()
-elif page == 'heart':
-    render_heart()
-elif page == 'bookmarks':
-    render_bookmarks()
-elif page == 'khatma':
-    render_khatma()
-elif page == 'dhikr':
-    render_dhikr()
-elif page == 'prayer':
-    render_prayer()
-elif page == 'qibla':
-    render_qibla()
-elif page == 'hadith':
-    render_hadith()
-elif page == 'settings':
-    render_settings()
+# ══════════════════════════════════════════════════════════════
+#  ⑩ مكتبة القلب
+# ══════════════════════════════════════════════════════════════
+def pg_heart():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>❤️ مكتبة القلب</h2>", unsafe_allow_html=True)
 
-# علامة مائية
-st.markdown("""<div class='watermark'>﴿ القرآن الكريم ﴾</div>""", unsafe_allow_html=True)
+    if not st.session_state.heart:
+        st.markdown("""
+        <div style='text-align:center;padding:60px 20px'>
+          <div style='font-size:4rem'>❤️</div>
+          <div style='color:#4a7060;font-family:Cairo,sans-serif;margin-top:14px;direction:rtl'>
+            مكتبة القلب فارغة<br>
+            <small>أضف الآيات التي تؤثر فيك من المصحف أو مشغل الصوت</small>
+          </div>
+        </div>""",unsafe_allow_html=True)
+        return
+
+    st.markdown(f"<p style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>{len(st.session_state.heart)} آية في مكتبة قلبك</p>",unsafe_allow_html=True)
+
+    for i,item in enumerate(reversed(st.session_state.heart)):
+        ri = len(st.session_state.heart)-1-i
+        c1,c2=st.columns([5,1])
+        with c1:
+            mood_span = f"<span style='background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:2px 10px;color:#C9A84C;font-family:Cairo,sans-serif;font-size:.75rem;margin-top:6px;display:inline-block'>{item.get('mood','')}</span>" if item.get('mood') else ""
+            st.markdown(f"""
+            <div class='ayah-card'>
+              <div style='color:#C9A84C;font-family:Cairo,sans-serif;font-size:.78rem;margin-bottom:6px'>📖 سورة {item.get("surah_name","")} — الآية {item.get("ayah","")}</div>
+              <div style='font-family:Amiri,serif;font-size:1.5rem;color:#f0ebe0;direction:rtl;line-height:2.4'>{item.get("text","")}</div>
+              {mood_span}
+              <div style='color:#2a4a35;font-family:Cairo,sans-serif;font-size:.7rem;margin-top:6px'>{item.get("time","")}</div>
+            </div>""",unsafe_allow_html=True)
+        with c2:
+            au=audio_url(item.get("surah",1),item.get("ayah",1),st.session_state.sheikh)
+            st.markdown(f"<audio controls style='width:100%;height:30px;margin-top:14px'><source src='{au}' type='audio/mpeg'></audio>",unsafe_allow_html=True)
+            if st.button("🗑️",key=f"dh_{ri}",help="حذف"):
+                st.session_state.heart.pop(ri);st.rerun()
+
+# ══════════════════════════════════════════════════════════════
+#  ⑪ الإشارات المرجعية
+# ══════════════════════════════════════════════════════════════
+def pg_bookmarks():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🔖 الإشارات المرجعية</h2>",unsafe_allow_html=True)
+
+    if not st.session_state.bookmarks:
+        st.markdown("<div style='text-align:center;padding:60px;color:#4a7060;font-family:Cairo,sans-serif;direction:rtl'><div style='font-size:3rem'>🔖</div><br>لا توجد إشارات بعد — أضفها أثناء القراءة</div>",unsafe_allow_html=True)
+        return
+
+    for i,bm in enumerate(reversed(st.session_state.bookmarks)):
+        ri=len(st.session_state.bookmarks)-1-i
+        c1,c2,c3=st.columns([4,1,1])
+        with c1:
+            st.markdown(f"""
+            <div class='sl-item'>
+              <div>
+                <div class='sl-name'>سورة {bm.get("surah_name","")} — الآية {bm.get("ayah","")}</div>
+                <div class='sl-meta'>⏰ {bm.get("time","")}</div>
+              </div>
+              <div class='sl-num'>{bm.get("surah","")}</div>
+            </div>""",unsafe_allow_html=True)
+        with c2:
+            if st.button("📖 اذهب",key=f"bm_go_{ri}",use_container_width=True):
+                st.session_state.cur_surah=bm.get("surah",1)
+                st.session_state.cur_ayah=bm.get("ayah",1)
+                st.session_state.page="mushaf";st.rerun()
+        with c3:
+            if st.button("🗑️",key=f"bm_del_{ri}",help="حذف"):
+                st.session_state.bookmarks.pop(ri);st.rerun()
+
+# ══════════════════════════════════════════════════════════════
+#  ⑫ الختمة
+# ══════════════════════════════════════════════════════════════
+def pg_khatma():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>📿 تتبع الختمة القرآنية</h2>",unsafe_allow_html=True)
+
+    done=sum(st.session_state.khatma)
+    pct=(done/114)*100
+    st.markdown(f"""
+    <div style='background:linear-gradient(135deg,#0d2018,#162a1f);border:1px solid #C9A84C;border-radius:16px;padding:22px;text-align:center;margin-bottom:18px'>
+      <div style='color:#C9A84C;font-family:Amiri,serif;font-size:2.8rem;font-weight:700'>{done}/114</div>
+      <div style='color:#7fb899;font-family:Cairo,sans-serif;font-size:.85rem;margin:6px 0'>سورة أتممت قراءتها</div>
+      <div class='pbar' style='margin:12px auto;max-width:400px'><div class='pfill' style='width:{pct:.1f}%'></div></div>
+      <div style='color:#C9A84C;font-family:Cairo,sans-serif'>{pct:.1f}% مكتملة</div>
+    </div>""",unsafe_allow_html=True)
+
+    c1,c2=st.columns(2)
+    with c1:
+        if st.button("✅ علّم الكل",use_container_width=True):
+            st.session_state.khatma=[True]*114;st.rerun()
+    with c2:
+        if st.button("🔄 إعادة ضبط",use_container_width=True):
+            st.session_state.khatma=[False]*114;st.rerun()
+
+    st.markdown("<p style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl;margin-top:12px'>اضغط على السورة لتغيير حالتها:</p>",unsafe_allow_html=True)
+
+    cols=st.columns(8)
+    for idx in range(114):
+        with cols[idx%8]:
+            done_flag=st.session_state.khatma[idx]
+            label=f"✅{SURAH_NAMES[idx][:4]}" if done_flag else SURAH_NAMES[idx][:4]
+            if st.button(label,key=f"k_{idx}",use_container_width=True,
+                          help=f"سورة {SURAH_NAMES[idx]} - {SURAH_VERSES[idx]} آية",
+                          type="primary" if done_flag else "secondary"):
+                st.session_state.khatma[idx]=not done_flag;st.rerun()
+
+# ══════════════════════════════════════════════════════════════
+#  ⑬ الأذكار
+# ══════════════════════════════════════════════════════════════
+def pg_dhikr():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🌙 الأذكار والأدعية</h2>",unsafe_allow_html=True)
+
+    DHIKR = {
+        "🌅 أذكار الصباح":[
+            {"t":"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ","n":1,"b":"ذكر الصباح الجامع"},
+            {"t":"اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ","n":1,"b":"تفويض الأمر كله لله"},
+            {"t":"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ","n":100,"b":"تُمحى به الخطايا وإن كانت كزبد البحر"},
+            {"t":"لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ","n":10,"b":"كمن أعتق 4 من ولد إسماعيل"},
+            {"t":"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ","n":1,"b":"سيد الاستغفار — من قاله موقناً دخل الجنة"},
+        ],
+        "🌙 أذكار المساء":[
+            {"t":"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ","n":1,"b":"ذكر المساء الجامع"},
+            {"t":"اللَّهُمَّ عَافِنِي فِي بَدَنِي اللَّهُمَّ عَافِنِي فِي سَمْعِي اللَّهُمَّ عَافِنِي فِي بَصَرِي لَا إِلَٰهَ إِلَّا أَنْتَ","n":3,"b":"دعاء العافية في الجسد"},
+            {"t":"اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ","n":3,"b":"الاستعاذة من المهالك"},
+            {"t":"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ","n":3,"b":"أفضل التسبيح"},
+        ],
+        "💤 أذكار النوم":[
+            {"t":"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا","n":1,"b":"ذكر النوم النبوي"},
+            {"t":"اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ","n":3,"b":"الحفظ من عذاب يوم القيامة"},
+            {"t":"سُبْحَانَ اللَّهِ — الحَمْدُ لِلَّهِ — اللَّهُ أَكْبَرُ","n":33,"b":"وصية النبي ﷺ لفاطمة — خير من خادم"},
+            {"t":"آيَةُ الْكُرْسِيِّ","n":1,"b":"حفظ الله لليل — لا يقربه شيطان حتى يصبح"},
+            {"t":"قُلْ هُوَ اللَّهُ أَحَدٌ — قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ — قُلْ أَعُوذُ بِرَبِّ النَّاسِ","n":3,"b":"كفاية من كل شيء"},
+        ],
+    }
+
+    t1,t2,t3 = st.tabs(list(DHIKR.keys()))
+    for tab, (tab_name, items) in zip([t1,t2,t3], DHIKR.items()):
+        with tab:
+            for j,d in enumerate(items):
+                key=f"dc_{tab_name}_{j}"
+                cnt=st.session_state.dhikr_cnt.get(key,0)
+                pct=min(cnt/d["n"],1.0)*100
+                c1,c2=st.columns([5,1])
+                with c1:
+                    st.markdown(f"""
+                    <div class='dhikr-card'>
+                      <div class='dhikr-text'>{d["t"]}</div>
+                      <div class='dhikr-badge'>× {d["n"]}</div>
+                      <div class='dhikr-benefit'>{d["b"]}</div>
+                      <div class='dhikr-counter'>{cnt}/{d["n"]}</div>
+                      <div class='pbar'><div class='pfill' style='width:{pct:.0f}%'></div></div>
+                    </div>""",unsafe_allow_html=True)
+                with c2:
+                    st.write("")
+                    st.write("")
+                    if st.button("سبّح\n✋",key=f"dhb_{tab_name}_{j}",use_container_width=True,type="primary"):
+                        nc=cnt+1 if cnt<d["n"] else 0
+                        st.session_state.dhikr_cnt[key]=nc
+                        if nc==d["n"]: st.toast("🎉 أتممت هذا الذكر!")
+                        st.rerun()
+
+# ══════════════════════════════════════════════════════════════
+#  ⑭ أوقات الصلاة
+# ══════════════════════════════════════════════════════════════
+def pg_prayer():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🕌 أوقات الصلاة</h2>",unsafe_allow_html=True)
+
+    c1,c2,c3=st.columns(3)
+    with c1: lat=st.number_input("خط العرض (Latitude)",value=30.0626,format="%.4f",key="pr_lat")
+    with c2: lon=st.number_input("خط الطول (Longitude)",value=31.2497,format="%.4f",key="pr_lon")
+    with c3:
+        methods={4:"أم القرى (مكة)",2:"رابطة العالم الإسلامي",5:"أمريكا الشمالية",1:"هيئة مصرية",3:"MWL",8:"خليج عُمان"}
+        msel=st.selectbox("طريقة الحساب",list(methods.values()),key="pr_m")
+        mkey=[k for k,v in methods.items() if v==msel][0]
+
+    st.markdown("<div class='warn-box'>📍 الموقع الافتراضي القاهرة — عدّله حسب مدينتك</div>",unsafe_allow_html=True)
+
+    if st.button("🔄 احسب أوقات الصلاة",use_container_width=True,type="primary",key="pr_go"):
+        with st.spinner("جارٍ الجلب…"):
+            t=fetch_prayer(lat,lon,mkey)
+        if t:
+            prayers=[("الفجر","Fajr","🌙"),("الشروق","Sunrise","🌅"),("الظهر","Dhuhr","☀️"),
+                     ("العصر","Asr","🌤"),("المغرب","Maghrib","🌇"),("العشاء","Isha","🌙")]
+            now=datetime.now().strftime("%H:%M")
+            for name,key,icon in prayers:
+                val=t.get(key,"--:--")
+                is_now="now" if val[:5]==now[:5] else ""
+                st.markdown(f"""
+                <div class='pt-card {is_now}'>
+                  <div style='display:flex;align-items:center;gap:10px'>
+                    <span style='font-size:1.2rem'>{icon}</span>
+                    <span class='pt-name {is_now}'>{name}</span>
+                    {"<span style='background:#C9A84C;color:#050e08;border-radius:20px;padding:2px 8px;font-family:Cairo,sans-serif;font-size:.7rem;font-weight:700'>الآن</span>" if is_now else ""}
+                  </div>
+                  <span class='pt-time'>{val}</span>
+                </div>""",unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:center;margin-top:12px;color:#4a7060;font-family:Cairo,sans-serif;font-size:.78rem'>📅 {datetime.now().strftime('%Y-%m-%d')} | ⏰ {now}</div>",unsafe_allow_html=True)
+        else:
+            st.error("⚠️ تعذّر جلب أوقات الصلاة. تحقق من الاتصال.")
+
+# ══════════════════════════════════════════════════════════════
+#  ⑮ القبلة
+# ══════════════════════════════════════════════════════════════
+def pg_qibla():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>🧭 اتجاه القبلة</h2>",unsafe_allow_html=True)
+    c1,c2=st.columns(2)
+    with c1: lat=st.number_input("خط العرض",value=30.0626,format="%.4f",key="qb_lat")
+    with c2: lon=st.number_input("خط الطول",value=31.2497,format="%.4f",key="qb_lon")
+
+    if st.button("🧭 احسب اتجاه القبلة",use_container_width=True,type="primary",key="qb_go"):
+        with st.spinner("جارٍ الحساب…"):
+            d=fetch_qibla(lat,lon)
+        if d is not None:
+            st.markdown(f"""
+            <div style='background:linear-gradient(135deg,#0d2018,#162a1f);border:2px solid #C9A84C;border-radius:20px;padding:40px;text-align:center;margin:16px 0'>
+              <div style='font-size:5rem;display:inline-block;transform:rotate({d}deg);transition:transform 1s ease'>🧭</div>
+              <div style='color:#C9A84C;font-family:Amiri,serif;font-size:2rem;margin-top:14px'>اتجاه القبلة</div>
+              <div style='color:#f5f0e8;font-family:Cairo,sans-serif;font-size:1.4rem;margin:8px 0'>{d:.2f}°</div>
+              <div style='color:#7fb899;font-family:Cairo,sans-serif;font-size:.82rem'>من الشمال باتجاه عقارب الساعة</div>
+            </div>""",unsafe_allow_html=True)
+        else:
+            st.error("⚠️ تعذّر الحساب. تحقق من الاتصال.")
+
+# ══════════════════════════════════════════════════════════════
+#  ⑯ الأحاديث
+# ══════════════════════════════════════════════════════════════
+def pg_hadith():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>📜 الأحاديث النبوية الصحيحة</h2>",unsafe_allow_html=True)
+
+    t1,t2=st.tabs(["🔍 ابحث عن حديث","📚 أحاديث مختارة"])
+
+    with t1:
+        q=st.text_input("موضوع الحديث",placeholder="مثال: الصدق، رحمة القلب، طلب العلم…",key="hd_q")
+        if st.button("🔍 ابحث",use_container_width=True,type="primary",key="hd_go"):
+            if q:
+                with st.spinner("جارٍ البحث…"):
+                    res=claude_ask(f"""ابحث عن الأحاديث النبوية الصحيحة الثابتة المتعلقة بـ: "{q}"
+أعطِ 4-5 أحاديث مع:
+- نص الحديث الكامل
+- الصحابي الراوي
+- المصدر والرقم (مثل: رواه البخاري برقم 52)
+- درجة صحته
+- الفائدة المستخلصة
+لا تذكر أحاديث ضعيفة أو موضوعة.""")
+                st.markdown(f"<div class='hadith-card'><div class='hadith-text' style='font-size:.92rem'>{res}</div></div>",unsafe_allow_html=True)
+
+    with t2:
+        HADITHS=[
+            {"t":"إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى","s":"صحيح البخاري (1) | عن عمر بن الخطاب رضي الله عنه"},
+            {"t":"الدِّينُ النَّصِيحَةُ","s":"صحيح مسلم (55) | عن تميم الداري رضي الله عنه"},
+            {"t":"لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ","s":"صحيح البخاري (13) | عن أنس بن مالك رضي الله عنه"},
+            {"t":"مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ","s":"صحيح البخاري (6136) | عن أبي هريرة رضي الله عنه"},
+            {"t":"مَنْ سَلَكَ طَرِيقًا يَطْلُبُ فِيهِ عِلْمًا سَلَكَ اللَّهُ بِهِ طَرِيقًا مِنْ طُرُقِ الْجَنَّةِ","s":"صحيح مسلم (2699) | عن أبي هريرة رضي الله عنه"},
+            {"t":"اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا وَخَالِقِ النَّاسَ بِخُلُقٍ حَسَنٍ","s":"سنن الترمذي (1987) | عن أبي ذر رضي الله عنه"},
+            {"t":"خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ","s":"صحيح البخاري (5027) | عن عثمان رضي الله عنه"},
+            {"t":"إِنَّ اللَّهَ لَا يَنْظُرُ إِلَى صُوَرِكُمْ وَأَمْوَالِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ وَأَعْمَالِكُمْ","s":"صحيح مسلم (2564) | عن أبي هريرة رضي الله عنه"},
+        ]
+        for h in HADITHS:
+            st.markdown(f"<div class='hadith-card'><div class='hadith-text'>{h['t']}</div><div class='hadith-src'>📚 {h['s']}</div></div>",unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════
+#  ⑰ الإعدادات
+# ══════════════════════════════════════════════════════════════
+def pg_settings():
+    st.markdown("<h2 style='color:#C9A84C;font-family:Amiri,serif;direction:rtl'>⚙️ الإعدادات</h2>",unsafe_allow_html=True)
+
+    c1,c2=st.columns(2)
+    with c1:
+        st.markdown("<h3 style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>📖 إعدادات المصحف</h3>",unsafe_allow_html=True)
+        fs=st.slider("حجم خط الآيات",1.2,3.4,st.session_state.font_size,0.05,key="cfg_fs")
+        st.session_state.font_size=fs
+        st.session_state.show_trans=st.checkbox("إظهار الترجمة الإنجليزية",st.session_state.show_trans,key="cfg_tr")
+        st.session_state.show_tafseer=st.checkbox("إظهار زر التفسير لكل آية",st.session_state.show_tafseer,key="cfg_tf")
+
+        st.markdown("<h3 style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl;margin-top:20px'>🎙️ إعدادات الصوت</h3>",unsafe_allow_html=True)
+        sk_n=list(SHEIKHS.values()); sk_k=list(SHEIKHS.keys())
+        ci=sk_k.index(st.session_state.sheikh) if st.session_state.sheikh in sk_k else 0
+        sn=st.selectbox("الشيخ الافتراضي",sk_n,index=ci,key="cfg_sk")
+        st.session_state.sheikh=sk_k[sk_n.index(sn)]
+
+    with c2:
+        st.markdown("<h3 style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl'>📊 الإحصائيات</h3>",unsafe_allow_html=True)
+        stats=[
+            ("سور أتممتها",f"{sum(st.session_state.khatma)}/114"),
+            ("آيات في مكتبة القلب",str(len(st.session_state.heart))),
+            ("الإشارات المرجعية",str(len(st.session_state.bookmarks))),
+            ("رسائل المساعد الذكي",str(len(st.session_state.chat))),
+        ]
+        for lbl,val in stats:
+            st.markdown(f"""
+            <div class='g-card' style='padding:12px 16px;margin:6px 0'>
+              <div style='display:flex;justify-content:space-between;direction:rtl'>
+                <span style='font-family:Cairo,sans-serif;color:#7fb899;font-size:.85rem'>{lbl}</span>
+                <span style='font-family:Amiri,serif;color:#C9A84C;font-size:1.1rem'>{val}</span>
+              </div>
+            </div>""",unsafe_allow_html=True)
+
+        st.markdown("<h3 style='color:#7fb899;font-family:Cairo,sans-serif;direction:rtl;margin-top:16px'>🔄 إعادة ضبط</h3>",unsafe_allow_html=True)
+        if st.button("🗑️ مسح مكتبة القلب",use_container_width=True,key="cfg_dh"):
+            st.session_state.heart=[];st.toast("✅ تم المسح")
+        if st.button("🗑️ مسح الإشارات المرجعية",use_container_width=True,key="cfg_db"):
+            st.session_state.bookmarks=[];st.toast("✅ تم المسح")
+        if st.button("🗑️ مسح محادثة المساعد",use_container_width=True,key="cfg_dc"):
+            st.session_state.chat=[];st.toast("✅ تم المسح")
+        if st.button("⚠️ إعادة ضبط كل شيء",use_container_width=True,key="cfg_all"):
+            for k in ["heart","bookmarks","chat","khatma","dhikr_cnt"]:
+                st.session_state[k]=[] if k!="khatma" and k!="dhikr_cnt" else ([False]*114 if k=="khatma" else {})
+            st.toast("✅ تم إعادة الضبط")
+            st.rerun()
+
+    st.markdown("""
+    <div class='g-card' style='margin-top:20px;text-align:center'>
+      <div style='color:#C9A84C;font-family:Amiri,serif;font-size:1.4rem;margin-bottom:10px'>مصحف هاشم الذكي</div>
+      <div style='color:#7fb899;font-family:Cairo,sans-serif;font-size:.78rem;line-height:2;direction:rtl'>
+        ✅ المصحف الكامل (114 سورة) بخط عثماني<br>
+        ✅ الاستماع لـ 8 مشايخ<br>
+        ✅ تصحيح التلاوة بالذكاء الاصطناعي<br>
+        ✅ خريطة القصص القرآنية التفاعلية<br>
+        ✅ القرآن بحسب الحالة الوجدانية<br>
+        ✅ التفسير وسبب النزول والمتشابهات<br>
+        ✅ البحث بالمقاصد<br>
+        ✅ المساعد القرآني الذكي<br>
+        ✅ مكتبة القلب والإشارات المرجعية<br>
+        ✅ الختمة التفاعلية والأذكار<br>
+        ✅ أوقات الصلاة واتجاه القبلة<br>
+        ✅ الأحاديث الصحيحة مع البحث
+      </div>
+    </div>""",unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════
+#  Router
+# ══════════════════════════════════════════════════════════════
+PAGE_FN = {
+    "home": pg_home,
+    "mushaf": pg_mushaf,
+    "audio": pg_audio,
+    "tajweed": pg_tajweed,
+    "mindmap": pg_mindmap,
+    "mood": pg_mood,
+    "tafseer": pg_tafseer,
+    "search": pg_search,
+    "ai": pg_ai,
+    "heart": pg_heart,
+    "bookmarks": pg_bookmarks,
+    "khatma": pg_khatma,
+    "dhikr": pg_dhikr,
+    "prayer": pg_prayer,
+    "qibla": pg_qibla,
+    "hadith": pg_hadith,
+    "settings": pg_settings,
+}
+
+fn = PAGE_FN.get(st.session_state.page, pg_home)
+fn()
