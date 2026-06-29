@@ -4,7 +4,7 @@ import random
 import json
 from datetime import datetime
 
-# ========== 页面配置 ==========
+# ========== إعدادات الصفحة ==========
 st.set_page_config(
     page_title="القرآن الكريم - موقع إبداعي",
     page_icon="🕌",
@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ========== 样式 ==========
+# ========== التنسيقات والأنماط ==========
 st.markdown("""
     <style>
     .main-header {
@@ -36,7 +36,7 @@ st.markdown("""
     }
     .ayah-card {
         background: #f8f4ec;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 15px;
         border-right: 5px solid #2d6a4f;
         margin: 1rem 0;
@@ -104,14 +104,18 @@ st.markdown("""
         font-size: 0.9rem;
         color: #2d6a4f;
     }
+    .audio-container {
+        direction: ltr;
+        margin-top: 0.5rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# ========== API 函数 ==========
+# ========== دوال API الأساسية ==========
 QURAN_API_BASE = "https://api.alquran.cloud/v1"
 
 def get_all_surahs():
-    """获取所有古兰经章节列表"""
+    """جلب قائمة جميع سور القرآن"""
     try:
         response = requests.get(f"{QURAN_API_BASE}/surah")
         if response.status_code == 200:
@@ -122,13 +126,12 @@ def get_all_surahs():
     return []
 
 def get_ayahs(surah_number, start=1, end=10):
-    """获取指定章节的经文"""
+    """جلب آيات محددة من سورة معينة"""
     try:
         response = requests.get(f"{QURAN_API_BASE}/surah/{surah_number}")
         if response.status_code == 200:
             data = response.json()
             ayahs = data.get('data', {}).get('ayahs', [])
-            # 过滤指定范围的经文
             filtered = [a for a in ayahs if start <= a.get('numberInSurah', 0) <= end]
             return filtered
     except:
@@ -136,9 +139,8 @@ def get_ayahs(surah_number, start=1, end=10):
     return []
 
 def get_random_ayah():
-    """获取随机经文"""
+    """جلب آية عشوائية من القرآن"""
     try:
-        # 随机选择一个章节
         surah_num = random.randint(1, 114)
         response = requests.get(f"{QURAN_API_BASE}/surah/{surah_num}")
         if response.status_code == 200:
@@ -153,9 +155,7 @@ def get_random_ayah():
     return None, None, None
 
 def search_ayahs(keyword):
-    """搜索经文（通过API）"""
-    # 注意：alquran.cloud API 不支持直接搜索
-    # 这里使用简单模拟：获取所有章节并搜索
+    """بحث بسيط في الآيات (محاكاة)"""
     results = []
     try:
         for surah_num in range(1, 115):
@@ -180,12 +180,19 @@ def search_ayahs(keyword):
         pass
     return results
 
-# ========== 侧边栏 ==========
+# ========== دالة خاصية التلاوة (الصوت) ==========
+def get_audio_url(surah_number, ayah_number):
+    """
+    توليد رابط مباشر لصوت الآية من CDN الخاص بـ (مشاري العفاسي)
+    مثال: السورة 1 الآية 1 -> 001001.mp3
+    """
+    return f"https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/{surah_number:03d}{ayah_number:03d}.mp3"
+
+# ========== الشريط الجانبي ==========
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3047/3047924.png", width=80)
     st.markdown("### 🕋 القائمة")
     
-    # 导航
     page = st.radio(
         "اختر الصفحة",
         ["🏠 الرئيسية", "📖 القراءة", "🎯 آية عشوائية", "🔍 البحث", "📊 عن الموقع"],
@@ -200,16 +207,15 @@ with st.sidebar:
     </div>
     """.replace("{ اليوم }", datetime.now().strftime("%Y-%m-%d")), unsafe_allow_html=True)
 
-# ========== 页面：首页 ==========
+# ========== الصفحة الرئيسية ==========
 if page == "🏠 الرئيسية":
     st.markdown("""
     <div class="main-header">
         <h1>🕌 القرآن الكريم</h1>
-        <p>موقع إبداعي لقراءة وتدبر آيات الله</p>
+        <p>موقع إبداعي لقراءة وتدبر آيات الله مع خاصية الاستماع</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 特色功能卡片
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -217,7 +223,7 @@ if page == "🏠 الرئيسية":
         <div class="feature-card">
             <h3>📖</h3>
             <h3>قراءة</h3>
-            <p style="color:#666; font-size:0.9rem;">تصفح سور القرآن<br>باللغتين العربية والإنجليزية</p>
+            <p style="color:#666; font-size:0.9rem;">تصفح السور<br>مع الترجمة والصوت</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -226,7 +232,7 @@ if page == "🏠 الرئيسية":
         <div class="feature-card">
             <h3>🎯</h3>
             <h3>آية عشوائية</h3>
-            <p style="color:#666; font-size:0.9rem;">آيات عشوائية للتدبر<br>والتأمل اليومي</p>
+            <p style="color:#666; font-size:0.9rem;">آيات عشوائية للتدبر<br>والاستماع إليها</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -242,47 +248,47 @@ if page == "🏠 الرئيسية":
     with col4:
         st.markdown("""
         <div class="feature-card">
-            <h3>💡</h3>
-            <h3>تدبر</h3>
-            <p style="color:#666; font-size:0.9rem;">تأمل في معاني الآيات<br>وتدبر كلمات الله</p>
+            <h3>🎧</h3>
+            <h3>تلاوة</h3>
+            <p style="color:#666; font-size:0.9rem;">استمع للتلاوة بصوت<br>مشاري العفاسي</p>
         </div>
         """, unsafe_allow_html=True)
     
-    # 随机推荐经文
     st.markdown("---")
-    st.markdown("### 🌟 آية اليوم")
+    st.markdown("### 🌟 آية اليوم مع التلاوة")
     
     ayah, surah_name, surah_num = get_random_ayah()
     if ayah:
+        ayah_number = ayah.get('numberInSurah', 0)
         st.markdown(f"""
         <div class="ayah-card">
             <div class="ayah-arabic">{ayah.get('text', '')}</div>
-            <div class="surah-name">— {surah_name} ({surah_num}) : {ayah.get('numberInSurah', 0)}</div>
+            <div class="surah-name">— {surah_name} ({surah_num}) : {ayah_number}</div>
             <div class="ayah-translation">"{ayah.get('translation', {}).get('en', 'Translation not available')}"</div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # مشغل الصوت في الصفحة الرئيسية
+        audio_url = get_audio_url(surah_num, ayah_number)
+        st.audio(audio_url, format="audio/mp3")
     
     if st.button("🔄 تحديث الآية"):
         st.rerun()
 
-# ========== 页面：阅读 ==========
+# ========== صفحة القراءة (مع التلاوة لكل آية) ==========
 elif page == "📖 القراءة":
-    st.markdown("### 📖 تصفح القرآن")
+    st.markdown("### 📖 تصفح القرآن مع الاستماع")
     
-    # 获取所有章节
     surahs = get_all_surahs()
     
     if surahs:
-        # 创建章节选择
         surah_names = [f"{s.get('number', 0)}. {s.get('name', '')} ({s.get('englishName', '')})" for s in surahs]
         selected = st.selectbox("اختر سورة", surah_names, index=0)
         
         if selected:
-            # 获取章节编号
             surah_number = int(selected.split('.')[0])
-            
-            # 获取章节详情
             surah_data = next((s for s in surahs if s.get('number') == surah_number), None)
+            
             if surah_data:
                 total_ayahs = surah_data.get('numberOfAyahs', 10)
                 
@@ -292,7 +298,7 @@ elif page == "📖 القراءة":
                 with col2:
                     end = st.number_input("إلى الآية", min_value=start, max_value=total_ayahs, value=min(start+9, total_ayahs))
                 
-                if st.button("📖 اقرأ", use_container_width=True):
+                if st.button("📖 اقرأ واستمع", use_container_width=True):
                     ayahs = get_ayahs(surah_number, start, end)
                     
                     if ayahs:
@@ -302,24 +308,36 @@ elif page == "📖 القراءة":
                         </div>
                         """, unsafe_allow_html=True)
                         
+                        # عرض كل آية مع مشغل صوت خاص بها
                         for ayah in ayahs:
-                            st.markdown(f"""
-                            <div class="ayah-card">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <span class="verse-counter">🕌 {ayah.get('numberInSurah', 0)}</span>
+                            ayah_num = ayah.get('numberInSurah', 0)
+                            audio_url = get_audio_url(surah_number, ayah_num)
+                            
+                            # عمودين: النص + مشغل الصوت
+                            col_text, col_audio = st.columns([5, 2])
+                            
+                            with col_text:
+                                st.markdown(f"""
+                                <div class="ayah-card" style="margin:0.3rem 0; padding:1rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span class="verse-counter">🕌 {ayah_num}</span>
+                                    </div>
+                                    <div class="ayah-arabic" style="font-size:1.8rem;">{ayah.get('text', '')}</div>
+                                    <div class="ayah-translation">"{ayah.get('translation', {}).get('en', 'Translation not available')}"</div>
                                 </div>
-                                <div class="ayah-arabic">{ayah.get('text', '')}</div>
-                                <div class="ayah-translation">"{ayah.get('translation', {}).get('en', 'Translation not available')}"</div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                                """, unsafe_allow_html=True)
+                            
+                            with col_audio:
+                                st.markdown("<div style='margin-top: 1.5rem;'>🎧 استمع</div>", unsafe_allow_html=True)
+                                st.audio(audio_url, format="audio/mp3")
                     else:
                         st.warning("⚠️ لم يتم العثور على آيات")
     else:
         st.error("❌ تعذر تحميل قائمة السور. يرجى التحقق من اتصال الإنترنت.")
 
-# ========== 页面：随机经文 ==========
+# ========== صفحة الآية العشوائية (مع الصوت) ==========
 elif page == "🎯 آية عشوائية":
-    st.markdown("### 🎯 آية عشوائية للتدبر")
+    st.markdown("### 🎯 آية عشوائية للتدبر والاستماع")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -328,27 +346,34 @@ elif page == "🎯 آية عشوائية":
             
             if ayah:
                 st.balloons()
+                ayah_number = ayah.get('numberInSurah', 0)
+                
                 st.markdown(f"""
                 <div class="ayah-card" style="border-right-color: #c9a84c;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span class="verse-counter">🎯 عشوائية</span>
                     </div>
                     <div class="ayah-arabic" style="font-size:2.2rem;">{ayah.get('text', '')}</div>
-                    <div class="surah-name">— {surah_name} ({surah_num}) : {ayah.get('numberInSurah', 0)}</div>
+                    <div class="surah-name">— {surah_name} ({surah_num}) : {ayah_number}</div>
                     <div class="ayah-translation">"{ayah.get('translation', {}).get('en', 'Translation not available')}"</div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # إضافة مشغل الصوت للآية العشوائية
+                audio_url = get_audio_url(surah_num, ayah_number)
+                st.markdown("#### 🎧 استمع للتلاوة")
+                st.audio(audio_url, format="audio/mp3")
             else:
                 st.error("❌ تعذر جلب آية. يرجى المحاولة مرة أخرى.")
     
     st.markdown("---")
     st.markdown("""
     <div style="text-align:center; color:#888; padding:1rem;">
-        <p>💡 اضغط على الزر للحصول على آية عشوائية للتدبر والتأمل</p>
+        <p>💡 اضغط على الزر للحصول على آية عشوائية مع إمكانية الاستماع إليها</p>
     </div>
     """, unsafe_allow_html=True)
 
-# ========== 页面：搜索 ==========
+# ========== صفحة البحث ==========
 elif page == "🔍 البحث":
     st.markdown("### 🔍 البحث في القرآن")
     
@@ -373,24 +398,24 @@ elif page == "🔍 البحث":
         else:
             st.warning("❌ لم يتم العثور على نتائج")
 
-# ========== 页面：关于 ==========
+# ========== صفحة عن الموقع ==========
 elif page == "📊 عن الموقع":
     st.markdown("### 📊 عن الموقع")
     
     st.markdown("""
     <div style="background: #f8f4ec; padding: 2rem; border-radius: 15px;">
-        <h3 style="color: #1a472a;">🕌 موقع القرآن الإبداعي</h3>
+        <h3 style="color: #1a472a;">🕌 موقع القرآن الإبداعي مع التلاوة</h3>
         <p style="color: #444; line-height: 1.8;">
-            هذا موقع تفاعلي لقراءة وتدبر آيات القرآن الكريم، تم بناؤه باستخدام 
-            <strong>Streamlit</strong> و <strong>Quran Cloud API</strong>.
+            هذا موقع تفاعلي لقراءة وتدبر آيات القرآن الكريم، مع إضافة خاصية <strong>الاستماع إلى التلاوة</strong> 
+            بصوت القارئ <strong>مشاري راشد العفاسي</strong>.
         </p>
         <hr>
-        <h4 style="color: #1a472a;">✨ المميزات</h4>
+        <h4 style="color: #1a472a;">✨ المميزات الجديدة</h4>
         <ul style="color: #444; line-height: 2;">
-            <li>📖 <strong>قراءة القرآن</strong> - تصفح جميع سور القرآن مع الترجمة</li>
-            <li>🎯 <strong>آية عشوائية</strong> - احصل على آية عشوائية للتدبر اليومي</li>
+            <li>📖 <strong>قراءة القرآن</strong> - تصفح جميع السور مع الترجمة</li>
+            <li>🎧 <strong>خاصية التلاوة</strong> - استمع لكل آية على حدة بصوت العفاسي</li>
+            <li>🎯 <strong>آية عشوائية</strong> - احصل على آية مع إمكانية الاستماع الفوري</li>
             <li>🔍 <strong>بحث</strong> - ابحث عن كلمات في آيات القرآن</li>
-            <li>🌙 <strong>واجهة عربية</strong> - تصميم أنيق باللغة العربية</li>
         </ul>
         <hr>
         <p style="color: #888; font-size: 0.9rem;">
@@ -402,10 +427,10 @@ elif page == "📊 عن الموقع":
     </div>
     """.replace("{ التاريخ }", datetime.now().strftime("%Y-%m-%d")), unsafe_allow_html=True)
 
-# ========== 页脚 ==========
+# ========== التذييل ==========
 st.markdown("""
 <div class="footer">
-    🕌 القرآن الكريم • موقع إبداعي للقراءة والتدبر • 
+    🕌 القرآن الكريم • موقع إبداعي للقراءة والتدبر والاستماع • 
     <span style="direction: ltr;">"وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ"</span>
 </div>
 """, unsafe_allow_html=True)
